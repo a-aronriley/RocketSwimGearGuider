@@ -30,6 +30,7 @@
   const $shoppingRequired = document.getElementById('shopping-required');
   const $shoppingOptional = document.getElementById('shopping-optional');
   const $allSet = document.getElementById('all-set');
+  const $retireSection = document.getElementById('retire-section');
   const $cartSummary = document.getElementById('cart-summary');
   const $cartDetails = document.getElementById('cart-details');
   const $storesSection = document.getElementById('stores-section');
@@ -559,6 +560,8 @@
       $allSet.classList.remove('hidden');
       $cartSummary.classList.add('hidden');
       $shoppingTitle.textContent = `Gear for ${toId}`;
+      // Still show retire section for upgrade flows (Issue #36)
+      renderRetireSection();
       return;
     }
 
@@ -590,8 +593,79 @@
       $shoppingOptional.innerHTML = '';
     }
 
+    // Render retired items (Issue #36)
+    renderRetireSection();
+
     // Render cart summary
     renderCartSummary(needed);
+  }
+
+  // ── Retire Section (Issue #36) ─────────────────────────
+  function renderRetireSection() {
+    if (!$retireSection) return;
+
+    const fromId = $fromSelect.value;
+    const toId = $toSelect.value;
+
+    // Only show for upgrade flows
+    if (!fromId || !toId) {
+      $retireSection.classList.add('hidden');
+      return;
+    }
+
+    // Find items that were at the from level but NOT at the to level
+    const retiredItems = gearData.gear.filter(g => {
+      const fromReq = g.levels[fromId];
+      const toReq = g.levels[toId];
+      return (fromReq === 'R' || fromReq === 'O') && toReq !== 'R' && toReq !== 'O';
+    });
+
+    if (retiredItems.length === 0) {
+      $retireSection.classList.add('hidden');
+      return;
+    }
+
+    const fromLevel = gearData.levels.find(l => l.id === fromId);
+    const toLevel = gearData.levels.find(l => l.id === toId);
+
+    let html = `
+      <div class="border-t pt-6">
+        <h3 class="text-sm font-bold text-amber-700 uppercase tracking-wider mb-3 flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+          No Longer Needed at ${toLevel.name}
+          <span class="text-xs font-normal text-gray-500">(${retiredItems.length} item${retiredItems.length !== 1 ? 's' : ''})</span>
+        </h3>
+        <p class="text-xs text-gray-500 mb-3">These items were used at ${fromLevel.name} but are not required at ${toLevel.name}. Consider passing them to a younger swimmer!</p>
+        <div class="space-y-2">
+    `;
+
+    retiredItems.forEach(item => {
+      // Check if this item has a replacement
+      const replacement = item.replacedBy ? gearData.gear.find(g => g.id === item.replacedBy) : null;
+      const replacementNote = replacement ? `<span class="text-xs text-teal-600">→ Replaced by ${replacement.name}</span>` : '';
+      const categoryIcon = item.category === 'WATER' ? '🏊' : '🏋️';
+
+      html += `
+        <div class="flex items-center gap-3 p-3 rounded-lg border border-amber-100 bg-amber-50">
+          <div class="flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 text-amber-600 shrink-0" aria-hidden="true">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs">${categoryIcon}</span>
+              <span class="font-medium text-sm text-navy-900">${item.name}</span>
+              ${replacementNote}
+            </div>
+            ${item.model ? `<p class="text-xs text-gray-500 mt-0.5">${item.model}</p>` : ''}
+          </div>
+          <span class="text-xs px-2 py-1 rounded-full bg-amber-200 text-amber-800 font-medium shrink-0">Hand down 🤝</span>
+        </div>
+      `;
+    });
+
+    html += '</div></div>';
+    $retireSection.innerHTML = html;
+    $retireSection.classList.remove('hidden');
   }
 
   function renderGearCard(gear) {
