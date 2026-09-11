@@ -511,33 +511,61 @@
       `;
     }
 
-    // ── Store/External items — buy links with store badges (Issue #13) ──
+    // ── Store/External items — grouped by retailer (Issues #13, #38) ──
     if (storeItems.length > 0) {
+      // Group items by store name
+      const storeGroups = {};
+      storeItems.forEach(g => {
+        const storeName = g.storeName || (g.source === 'amazon' ? 'Amazon' : 'Other');
+        if (!storeGroups[storeName]) storeGroups[storeName] = [];
+        storeGroups[storeName].push(g);
+      });
+
+      // Find store URL from gearData.stores for group header links
+      const getStoreUrl = (name) => {
+        const store = (gearData.stores || []).find(s => s.name === name);
+        return store ? store.url : null;
+      };
+
       html += `
         <div class="bg-green-50 rounded-lg p-4 border border-green-100 mt-4">
-          <h4 class="font-semibold text-green-800 text-sm mb-2 flex items-center gap-2">
+          <h4 class="font-semibold text-green-800 text-sm mb-3 flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
             Buy from Stores
           </h4>
-          <ul class="text-sm text-green-900 space-y-3">
-            ${storeItems.map(g => {
-              const storeName = g.storeName || (g.source === 'amazon' ? 'Amazon' : 'Store');
+          <div class="space-y-4">
+            ${Object.entries(storeGroups).map(([storeName, items]) => {
+              const storeUrl = getStoreUrl(storeName);
               const isSplashables = storeName.toLowerCase().includes('splashable');
+              const storeDiscount = isSplashables ? ' — 20% club discount' : '';
               return `
-              <li class="flex items-center justify-between gap-2">
-                <div>
-                  <span class="font-medium">${g.name}</span>
-                  ${isSplashables ? '<span class="ml-1 text-xs bg-teal-100 text-teal-700 px-1.5 py-0.5 rounded font-medium">20% club discount</span>' : ''}
+              <div class="bg-white rounded-lg p-3 border border-green-100">
+                <div class="flex items-center justify-between mb-2">
+                  <h5 class="font-semibold text-green-900 text-sm flex items-center gap-2">
+                    🏪 ${storeName}
+                    ${isSplashables ? '<span class="text-xs bg-teal-100 text-teal-700 px-1.5 py-0.5 rounded font-medium">20% club discount</span>' : ''}
+                    <span class="text-xs font-normal text-gray-500">(${items.length} item${items.length > 1 ? 's' : ''})</span>
+                  </h5>
+                  ${storeUrl ? `<a href="${storeUrl}" target="_blank" rel="noopener" class="text-xs text-green-700 hover:text-green-900 underline no-print" aria-label="Visit ${storeName} website">Visit store →</a>` : ''}
                 </div>
-                <a href="${g.purchaseUrl}" target="_blank" rel="noopener"
-                  class="inline-flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap no-print"
-                  aria-label="Buy ${g.name} at ${storeName} — opens in new tab">
-                  Buy at ${storeName}
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                </a>
-              </li>`;
+                <ul class="text-sm text-green-900 space-y-2">
+                  ${items.map(g => `
+                  <li class="flex items-center justify-between gap-2">
+                    <div>
+                      <span class="font-medium">${g.name}</span>
+                      ${g.model ? '<span class="text-xs text-teal-700 ml-1">' + g.model + '</span>' : ''}
+                    </div>
+                    <a href="${g.purchaseUrl}" target="_blank" rel="noopener"
+                      class="inline-flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap no-print"
+                      aria-label="Buy ${g.name} at ${storeName} — opens in new tab">
+                      Buy
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    </a>
+                  </li>`).join('')}
+                </ul>
+              </div>`;
             }).join('')}
-          </ul>
+          </div>
         </div>
       `;
     }
