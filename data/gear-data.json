@@ -64,9 +64,10 @@
       "category": "WATER",
       "levels": { "J3": "R", "J2": "R", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
       "priceFromClub": null,
-      "purchaseUrl": null,
-      "source": "coach",
-      "notes": "Ask coach"
+      "purchaseUrl": "https://splashables.com/store/kickboards.html",
+      "source": "store",
+      "storeName": "Splashables",
+      "notes": "Also available at lysports.com"
     },
     {
       "id": "pullbuoy",
@@ -138,9 +139,10 @@
       "category": "WATER",
       "levels": { "J3": "", "J2": "", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
       "priceFromClub": null,
-      "purchaseUrl": null,
-      "source": "coach",
-      "notes": "Available from club / ask coach"
+      "purchaseUrl": "https://splashables.com/store/finis-pulling-ankle-strap.html",
+      "source": "store",
+      "storeName": "Splashables",
+      "notes": ""
     },
     {
       "id": "tennis-ball",
