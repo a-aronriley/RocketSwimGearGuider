@@ -20,6 +20,7 @@
     {
       "id": "fins",
       "name": "Fins",
+      "model": "Speedo Switchblade Training Fin",
       "category": "WATER",
       "levels": { "J3": "R", "J2": "R", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "R" },
       "priceFromClub": null,
@@ -31,6 +32,7 @@
     {
       "id": "club-swim-cap",
       "name": "Club Swim Cap",
+      "model": "RocketSwim Silicone Cap",
       "category": "WATER",
       "levels": { "J3": "R", "J2": "R", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "R" },
       "priceFromClub": 20,
@@ -41,6 +43,7 @@
     {
       "id": "club-tshirt",
       "name": "Club T-shirt",
+      "model": "RocketSwim Team T-shirt",
       "category": "WATER",
       "levels": { "J3": "R", "J2": "R", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
       "priceFromClub": 20,
@@ -51,6 +54,7 @@
     {
       "id": "club-mesh-bag",
       "name": "Club Mesh Bag",
+      "model": "RocketSwim Mesh Equipment Bag",
       "category": "WATER",
       "levels": { "J3": "R", "J2": "R", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
       "priceFromClub": 40,
@@ -61,6 +65,7 @@
     {
       "id": "kickboard",
       "name": "Kickboard",
+      "model": "TYR Classic Kickboard",
       "category": "WATER",
       "levels": { "J3": "R", "J2": "R", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
       "priceFromClub": null,
@@ -72,6 +77,7 @@
     {
       "id": "pullbuoy",
       "name": "Pullbuoy",
+      "model": "TYR Pull Float",
       "category": "WATER",
       "levels": { "J3": "R", "J2": "R", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "R" },
       "priceFromClub": null,
@@ -83,6 +89,7 @@
     {
       "id": "paddles-small-0",
       "name": "Paddles small #0",
+      "model": "Strokemaker Paddles #0",
       "category": "WATER",
       "levels": { "J3": "", "J2": "", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
       "priceFromClub": null,
@@ -94,6 +101,7 @@
     {
       "id": "paddles-medium-1",
       "name": "Paddles medium #1",
+      "model": "Strokemaker Paddles #1",
       "category": "WATER",
       "levels": { "J3": "", "J2": "", "J1": "", "S3": "", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
       "priceFromClub": null,
@@ -105,6 +113,7 @@
     {
       "id": "snorkel",
       "name": "Snorkel",
+      "model": "FINIS Swimmer's Snorkel",
       "category": "WATER",
       "levels": { "J3": "", "J2": "", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "R" },
       "priceFromClub": null,
@@ -116,6 +125,7 @@
     {
       "id": "parachute",
       "name": "Parachute with 1.5m stretch cord",
+      "model": "StrechCordz Drag Belt w/ Parachute",
       "category": "WATER",
       "levels": { "J3": "", "J2": "", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
       "priceFromClub": 35,
@@ -126,6 +136,7 @@
     {
       "id": "stroller-hook",
       "name": "Stroller hook",
+      "model": "Jolly Jumper Smart Hook",
       "category": "WATER",
       "levels": { "J3": "", "J2": "", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
       "priceFromClub": null,
@@ -136,6 +147,7 @@
     {
       "id": "ankle-band",
       "name": "Ankle Band",
+      "model": "FINIS Pulling Ankle Strap",
       "category": "WATER",
       "levels": { "J3": "", "J2": "", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
       "priceFromClub": null,
@@ -167,6 +179,7 @@
     {
       "id": "plastic-cup",
       "name": "Plastic cup (for backstroke)",
+      "model": "Frcctre Unbreakable Plastic Cup",
       "category": "WATER",
       "levels": { "J3": "", "J2": "R", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
       "priceFromClub": null,
@@ -177,6 +190,7 @@
     {
       "id": "drag-suit",
       "name": "Drag suit",
+      "model": "FINIS Ultimate Drag Suit",
       "category": "WATER",
       "levels": { "J3": "", "J2": "", "J1": "", "S3": "", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
       "priceFromClub": null,
@@ -188,6 +202,7 @@
     {
       "id": "drag-suit-pockets",
       "name": "Drag suit with pockets",
+      "model": "Poly Mesh Training Suit (Adult)",
       "category": "WATER",
       "levels": { "J3": "", "J2": "", "J1": "", "S3": "", "S2": "", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
       "priceFromClub": null,
@@ -219,6 +234,7 @@
     {
       "id": "stretch-cord",
       "name": "Stretch cord with paddles (pullies)",
+      "model": "StrechCordz w/ Paddles",
       "category": "DRYLAND",
       "levels": { "J3": "", "J2": "", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
       "priceFromClub": 45,
@@ -229,6 +245,7 @@
     {
       "id": "resistance-band",
       "name": "Resistance Band",
+      "model": "TYR Elite Resistance Tubing",
       "category": "DRYLAND",
       "levels": { "J3": "", "J2": "R", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
       "priceFromClub": null,
@@ -250,6 +267,7 @@
     {
       "id": "massage-roller",
       "name": "Massage Roller",
+      "model": "Dr Health Deep Tissue Foam Roller",
       "category": "DRYLAND",
       "levels": { "J3": "", "J2": "", "J1": "", "S3": "", "S2": "O", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
       "priceFromClub": null,

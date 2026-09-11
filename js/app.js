@@ -332,6 +332,7 @@
               <span class="font-medium text-sm">${gearItem.name}</span>
               ${badgeHtml}
             </div>
+            ${gearItem.model ? '<p class="text-xs text-teal-700 mt-0.5 font-medium">' + gearItem.model + '</p>' : ''}
             ${gearItem.notes ? '<p class="text-xs text-gray-500 mt-0.5">' + gearItem.notes + '</p>' : ''}
           </div>
           ${getSourceBadge(gearItem)}
@@ -428,6 +429,7 @@
             ${priceText ? `<span class="text-sm font-semibold text-teal-700">${priceText}</span>` : ''}
             ${isSplashables ? '<span class="text-xs bg-teal-100 text-teal-700 px-1.5 py-0.5 rounded font-medium">20% club discount</span>' : ''}
           </div>
+          ${gear.model ? `<p class="text-xs text-teal-700 mt-0.5 font-medium">${gear.model}</p>` : ''}
           ${gear.notes ? `<p class="text-xs text-gray-500 mt-1">${gear.notes}</p>` : ''}
         </div>
         <div class="flex items-center gap-2 shrink-0">
