@@ -1,4 +1,8 @@
 {
+  "config": {
+    "dataSource": "json",
+    "sheetsUrl": null
+  },
   "levels": [
     { "id": "J3", "name": "Junior 3", "ageRange": "7-9", "competitive": "Intro", "coachRatio": "10:1" },
     { "id": "J2", "name": "Junior 2", "ageRange": "7-10", "competitive": "Intro", "coachRatio": "12:1" },
