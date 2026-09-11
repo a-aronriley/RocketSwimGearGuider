@@ -2,7 +2,7 @@
 
 Equipment requirements guide for [RocketSwim](https://rocketswim.com) competitive swim club parents.
 
-**Live:** [https://aaronrileysalesforce.github.io/RocketSwimGearGuider/](https://aaronrileysalesforce.github.io/RocketSwimGearGuider/)
+**Live:** [https://a-aronriley.github.io/RocketSwimGearGuider/](https://aaronrileysalesforce.github.io/RocketSwimGearGuider/)
 
 ## What It Does
 
