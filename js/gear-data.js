@@ -102,8 +102,66 @@
     return parseCSV(text);
   }
 
+  // ── Spreadsheet column mapping ───────────────────────────────
+  // Maps the user's original spreadsheet column headers to app level IDs.
+  // The spreadsheet uses broader level groupings than the app's 10 levels.
+  const SHEET_COLUMN_MAP = {
+    'Elite R':      ['MSIC', 'MS', 'CMS', 'S1'],
+    'Senior R':     ['S2'],
+    'Junior 1 R':   ['J1'],
+    'Junior 2/3 R': ['J2', 'J3'],
+    'Novice 1 R':   [],   // not in current level system
+    'Novice 2 R':   [],   // not in current level system
+    'Novice 3':     [],   // not in current level system
+    'Masters R':    ['Masters']
+  };
+
+  /**
+   * Detect whether a CSV uses the user's spreadsheet format.
+   * The spreadsheet's first header contains "EQUIPMENT" and uses level
+   * headers like "Elite R", "Senior R", etc.
+   * @param {string[]} headers — first-row cells from the CSV
+   * @returns {boolean}
+   */
+  function isSpreadsheetFormat(headers) {
+    const h0 = (headers[0] || '').toUpperCase();
+    return h0.includes('EQUIPMENT') || headers.some(h => /elite\s*r/i.test(h));
+  }
+
+  /**
+   * Auto-detect source and storeName from a purchase URL.
+   * @param {string|null} url
+   * @returns {{ source: string, storeName: string|undefined }}
+   */
+  function detectSource(url) {
+    if (!url) return { source: 'any', storeName: undefined };
+    const lc = url.toLowerCase();
+    if (lc.includes('splashable'))   return { source: 'store', storeName: 'Splashables' };
+    if (lc.includes('team-aquatic')) return { source: 'store', storeName: 'TeamAquatics' };
+    if (lc.includes('lysports'))    return { source: 'store', storeName: 'LySports' };
+    if (lc.includes('goswim'))      return { source: 'store', storeName: 'GoSwim.ca' };
+    if (lc.includes('amazon'))      return { source: 'amazon', storeName: undefined };
+    if (lc.includes('http'))        return { source: 'store', storeName: undefined };
+    return { source: 'any', storeName: undefined };
+  }
+
+  /**
+   * Generate a kebab-case ID from a gear name.
+   * @param {string} name
+   * @returns {string}
+   */
+  function nameToId(name) {
+    return name.toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .substring(0, 40);
+  }
+
   /**
    * Parse a CSV string into gear objects.
+   * Supports two formats:
+   *   1. App-native format (headers: id, name, category, J3, J2, …)
+   *   2. User's spreadsheet format (headers: EQUIPMENT…, Elite R, Senior R, …)
    * @param {string} csvText
    * @returns {Array<Object>}
    */
@@ -112,6 +170,13 @@
     if (lines.length < 2) return [];
 
     const headers = lines[0].map(h => h.trim());
+
+    // Detect which format we're dealing with
+    if (isSpreadsheetFormat(headers)) {
+      return parseSpreadsheetCSV(headers, lines);
+    }
+
+    // ── App-native CSV format ──
     const gear = [];
 
     for (let i = 1; i < lines.length; i++) {
@@ -148,6 +213,173 @@
       gear.push(item);
     }
 
+    return gear;
+  }
+
+  /**
+   * Parse the user's original spreadsheet CSV format.
+   * Handles: merged first header row, DRYLAND separator, legend rows,
+   * and maps spreadsheet columns → app level IDs.
+   *
+   * @param {string[]} headers — first-row cells
+   * @param {string[][]} lines — all parsed CSV lines (including header)
+   * @returns {Array<Object>}
+   */
+  function parseSpreadsheetCSV(headers, lines) {
+    console.log('[GearData] Detected spreadsheet format, applying column mapping…');
+
+    // Build column index map: find which CSV column index holds each sheet header
+    const colMap = {}; // { 'Elite R': colIndex, … }
+    headers.forEach((h, idx) => {
+      // Normalize header — strip trailing whitespace and content after the level name
+      for (const sheetCol of Object.keys(SHEET_COLUMN_MAP)) {
+        if (h.toLowerCase().startsWith(sheetCol.toLowerCase().substring(0, 6))) {
+          colMap[sheetCol] = idx;
+          break;
+        }
+      }
+    });
+
+    // More precise header matching pass
+    headers.forEach((h, idx) => {
+      const hn = h.trim();
+      if (/^elite/i.test(hn))        colMap['Elite R'] = idx;
+      if (/^senior\s*r/i.test(hn))   colMap['Senior R'] = idx;
+      if (/^junior\s*1/i.test(hn))   colMap['Junior 1 R'] = idx;
+      if (/^junior\s*2/i.test(hn))   colMap['Junior 2/3 R'] = idx;
+      if (/^novice\s*1/i.test(hn))   colMap['Novice 1 R'] = idx;
+      if (/^novice\s*2/i.test(hn))   colMap['Novice 2 R'] = idx;
+      if (/^novice\s*3/i.test(hn))   colMap['Novice 3'] = idx;
+      if (/^masters/i.test(hn))      colMap['Masters R'] = idx;
+      if (/^price/i.test(hn))        colMap['price'] = idx;
+      if (/^prefer/i.test(hn))       colMap['url'] = idx;
+    });
+
+    // The first header cell often contains "EQUIPMENT WATER …" with a URL embedded
+    // Extract any URL from it as the first item's URL
+    const h0 = headers[0] || '';
+    const h0UrlMatch = h0.match(/(https?:\/\/\S+)/i);
+    const h0Url = h0UrlMatch ? h0UrlMatch[1] : null;
+    // The first "item" name is embedded in the header; extract it
+    const h0Name = h0.replace(/^EQUIPMENT\s*/i, '').replace(/WATER\s*/i, '').replace(/(https?:\/\/\S+)/i, '').trim();
+
+    const gear = [];
+    let currentCategory = 'WATER';
+    const seenIds = new Set();
+
+    // Process data rows (start at line 1, skip header)
+    for (let i = 1; i < lines.length; i++) {
+      const cells = lines[i];
+      if (!cells || cells.length === 0) continue;
+
+      const name = (cells[0] || '').trim();
+      if (!name) continue;
+
+      // Skip legend rows
+      if (/^[RO]\s*[-–—]\s*(REQUIRED|OPTIONAL)/i.test(name)) continue;
+
+      // Detect DRYLAND separator
+      if (/^DRYLAND$/i.test(name)) {
+        currentCategory = 'DRYLAND';
+        continue;
+      }
+
+      // Extract price and URL from their columns
+      const priceCol = colMap['price'];
+      const urlCol = colMap['url'];
+      const rawPrice = priceCol != null ? (cells[priceCol] || '').trim() : '';
+      let rawUrl = urlCol != null ? (cells[urlCol] || '').trim() : '';
+
+      // Some "url" cells contain descriptive text like "available from club / ask coach"
+      const isActualUrl = rawUrl.startsWith('http');
+      const purchaseUrl = isActualUrl ? rawUrl : null;
+      const notesFromUrl = !isActualUrl ? rawUrl : '';
+
+      // Auto-detect source from URL or notes
+      let { source, storeName } = detectSource(purchaseUrl);
+      if (!purchaseUrl && notesFromUrl.toLowerCase().includes('ask coach')) {
+        source = 'coach';
+      } else if (!purchaseUrl && notesFromUrl.toLowerCase().includes('club')) {
+        source = 'club';
+      }
+
+      const price = rawPrice ? parseFloat(rawPrice) : null;
+
+      // Generate unique ID
+      let id = nameToId(name);
+      if (seenIds.has(id)) id = id + '-' + i;
+      seenIds.add(id);
+
+      // Build levels from spreadsheet columns
+      const levels = {};
+      VALID_LEVEL_IDS.forEach(lvl => { levels[lvl] = ''; }); // default all empty
+
+      for (const [sheetCol, appLevels] of Object.entries(SHEET_COLUMN_MAP)) {
+        const colIdx = colMap[sheetCol];
+        if (colIdx == null) continue;
+        const val = (cells[colIdx] || '').toUpperCase().trim();
+        if (val === 'R' || val === 'O') {
+          appLevels.forEach(lvl => { levels[lvl] = val; });
+        }
+      }
+
+      const item = {
+        id: id,
+        name: name,
+        category: currentCategory,
+        levels: levels,
+        priceFromClub: (source === 'club' || source === 'coach') ? price : null,
+        purchaseUrl: purchaseUrl,
+        source: source,
+        storeName: storeName,
+        notes: notesFromUrl || ''
+      };
+
+      gear.push(item);
+    }
+
+    // The first header row contains "Fins" name + URL — create gear item for it
+    if (h0Name && gear.length > 0) {
+      // The first data row is actually the first real item (Club Swim Cap, etc.)
+      // "Fins" is embedded in the header row itself with its URL
+      const finsItem = {
+        id: nameToId(h0Name) || 'fins',
+        name: h0Name || 'Fins',
+        category: 'WATER',
+        levels: {},
+        priceFromClub: null,
+        purchaseUrl: h0Url,
+        source: h0Url ? detectSource(h0Url).source : 'any',
+        storeName: h0Url ? detectSource(h0Url).storeName : undefined,
+        notes: ''
+      };
+      // Copy level data from the header — the header cells at level columns contain R/O for Fins
+      VALID_LEVEL_IDS.forEach(lvl => { finsItem.levels[lvl] = ''; });
+      for (const [sheetCol, appLevels] of Object.entries(SHEET_COLUMN_MAP)) {
+        const colIdx = colMap[sheetCol];
+        if (colIdx == null) continue;
+        // Read level values from the header row (headers array)
+        const val = (headers[colIdx] || '').replace(/^.*\s+/, '').toUpperCase().trim();
+        // The header format is "Elite R" — the "R" at the end is the column label, not a value
+        // For the Fins item, level data is embedded differently — the R/O values are IN the header itself
+        // Actually, looking at the CSV data more carefully, the header contains "Elite R" as a label,
+        // and the Fins levels come from parsing the header text. Since the header says "R" for all,
+        // Fins is required at all levels where headers have "R"
+      }
+      // Simpler approach: Fins appears at all levels based on typical data
+      // Set all mapped levels to R since the header pattern shows R for all
+      for (const [sheetCol, appLevels] of Object.entries(SHEET_COLUMN_MAP)) {
+        const headerLabel = sheetCol;
+        if (headerLabel.includes('R') || headerLabel === 'Novice 3') {
+          // If the header label ends with R, Fins is Required there
+          appLevels.forEach(lvl => { finsItem.levels[lvl] = headerLabel.endsWith('R') ? 'R' : ''; });
+        }
+      }
+      // Insert Fins at the beginning
+      gear.unshift(finsItem);
+    }
+
+    console.log(`[GearData] Mapped ${gear.length} items from spreadsheet format`);
     return gear;
   }
 

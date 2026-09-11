@@ -1,7 +1,7 @@
 {
   "config": {
     "dataSource": "json",
-    "sheetsUrl": null
+    "sheetsUrl": "https://docs.google.com/spreadsheets/d/1ki2BuJM807boWUtz9JLaoJcFKUr_xZ-RlrEsX_X3roI/gviz/tq?tqx=out:csv"
   },
   "levels": [
     { "id": "J3", "name": "Junior 3", "ageRange": "7-9", "competitive": "Intro", "coachRatio": "10:1" },
