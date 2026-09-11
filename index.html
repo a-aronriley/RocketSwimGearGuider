@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#012b47">
   <title>RocketSwim Gear Guider — Toronto Competitive Swimming Equipment</title>
   <meta name="description" content="Find out exactly what gear your competitive swimmer needs at RocketSwim Toronto. Select your level, check off owned equipment, and get a personalized shopping list with prices and buy links.">
 
-  <!-- Open Graph (Issue #21) -->
+  <!-- Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="RocketSwim Gear Guider — Toronto Competitive Swimming Equipment">
   <meta property="og:description" content="Find out exactly what gear your competitive swimmer needs at RocketSwim Toronto. Personalized shopping lists by level with prices and buy links.">
@@ -20,280 +21,479 @@
   <meta name="twitter:description" content="Personalized swim gear shopping lists for RocketSwim competitive levels.">
   <meta name="twitter:image" content="https://rocketswim.com/wp-content/uploads/cropped-Logo_colorr-1.jpg">
 
-  <!-- Favicons (Issue #21) -->
+  <!-- Favicons -->
   <link rel="icon" href="https://rocketswim.com/wp-content/uploads/cropped-cropped-Logo_color-1-32x32.jpg" sizes="32x32">
-  <link rel="icon" href="https://rocketswim.com/wp-content/uploads/cropped-cropped-Logo_color-1-32x32.jpg" sizes="16x16">
   <link rel="apple-touch-icon" href="https://rocketswim.com/wp-content/uploads/cropped-cropped-Logo_color-1-180x180.jpg">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="css/styles.css">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            navy: { 50: '#f4f8ff', 100: '#e8f2ff', 200: '#dce8f5', 300: '#7a96b2', 400: '#5a7a9c', 500: '#3b5f88', 600: '#2a4d73', 700: '#1a3a5c', 800: '#0d2e4a', 900: '#012b47' },
-            teal: { 50: '#e8f2ff', 100: '#c8e0ff', 200: '#99c8ff', 300: '#66afff', 400: '#3396f0', 500: '#0073e6', 600: '#0066cc', 700: '#0057a8', 800: '#004080', 900: '#003060' },
-            gold: { 50: '#fff8e1', 100: '#ffecb3', 200: '#ffe082', 300: '#ffd54f', 400: '#ffca28', 500: '#FFC107', 600: '#ffb300', 700: '#ffa000', 800: '#ff8f00', 900: '#ff6f00' }
-          },
-          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
-        }
-      }
-    }
-  </script>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
 </head>
-<body class="bg-navy-50 font-sans text-navy-700 min-h-screen">
-
-  <!-- Skip to content (Issue #22 — Accessibility) -->
+<body>
+  <!-- Skip to content (Accessibility) -->
   <a href="#main-content" class="skip-link">Skip to main content</a>
 
-  <!-- Header -->
-  <header class="bg-navy-900 text-white shadow-lg" role="banner">
-    <div class="max-w-5xl mx-auto px-4 py-4 flex items-center gap-4">
-      <img src="images/rocket-swim-logo.png" alt="RocketSwim Logo" class="h-12 sm:h-16 w-auto object-contain drop-shadow-md">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight">RocketSwim <span class="text-teal-400">Gear Guider</span></h1>
-        <p class="text-sm text-gray-300">Know exactly what equipment your swimmer needs</p>
+  <div x-data="gearGuide" x-cloak>
+    <!-- Header -->
+    <header class="site-header" role="banner">
+      <div class="site-header__inner">
+        <img class="site-logo" src="images/rocket-swim-logo.png" alt="RocketSwim Logo" width="568" height="336">
+        <h1>Gear <span>Guider</span></h1>
+        <p>Know exactly what equipment your swimmer needs</p>
+      </div>
+    </header>
+
+    <main id="main-content" class="page" role="main">
+
+      <!-- Loading skeleton -->
+      <div x-show="!loaded && !error" class="loading-skeleton" aria-label="Loading gear data">
+        <div class="skeleton-box skeleton-heading" aria-hidden="true"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+          <div><div class="skeleton-box skeleton-text" aria-hidden="true"></div><div class="skeleton-box skeleton-select" aria-hidden="true"></div></div>
+          <div><div class="skeleton-box skeleton-text" aria-hidden="true"></div><div class="skeleton-box skeleton-select" aria-hidden="true"></div></div>
+        </div>
+        <p class="sr-only">Loading gear data, please wait…</p>
+      </div>
+
+      <!-- Error state -->
+      <div x-show="error" class="error-state" role="alert">
+        <div style="font-size:3rem;" aria-hidden="true">😕</div>
+        <h2>Unable to Load Gear Data</h2>
+        <p x-text="error" style="color:var(--muted);margin-block-end:var(--space-4);"></p>
+        <button class="btn" onclick="location.reload()">Try Again</button>
+      </div>
+
+      <template x-if="loaded">
+        <div>
+          <!-- Step nav -->
+          <nav class="steps" aria-label="Gear Guider steps">
+            <button type="button" @click="goTo(1)" :aria-current="step === 1 ? 'step' : false">1 Setup</button>
+            <button type="button" @click="goTo(2)" :disabled="!allSetupReady" :aria-current="step === 2 ? 'step' : false">2 Checklist</button>
+            <button type="button" @click="goTo(3)" :disabled="!allSetupReady" :aria-current="step === 3 ? 'step' : false">3 Review</button>
+          </nav>
+
+          <!-- ═══ Step 1: Setup ═══ -->
+          <section x-show="step === 1" :hidden="step !== 1" class="panel" aria-labelledby="setup-heading">
+            <div class="section-head">
+              <h2 id="setup-heading">Swimmer setup</h2>
+            </div>
+
+            <div class="tabs" role="tablist" aria-label="Swimmers">
+              <template x-for="(swimmer, index) in swimmers" :key="swimmer.id">
+                <button type="button" class="tab" role="tab"
+                  :aria-selected="activeSwimmerId === swimmer.id"
+                  @click="activeSwimmerId = swimmer.id; persist()"
+                  x-text="swimmerLabel(swimmer, index)"></button>
+              </template>
+              <button type="button" class="btn btn--ghost" @click="addSwimmer()">+ Add swimmer</button>
+            </div>
+
+            <template x-for="(swimmer, index) in swimmers" :key="swimmer.id">
+              <div class="panel" x-show="activeSwimmerId === swimmer.id" role="tabpanel">
+                <div class="field">
+                  <label :for="'name-' + swimmer.id">First name <span class="hint">(optional)</span></label>
+                  <input type="text" :id="'name-' + swimmer.id" autocomplete="off"
+                    x-model="swimmer.firstName" @input="persist()" placeholder="Used only in the Discord message">
+                </div>
+
+                <fieldset class="choice-set">
+                  <legend>Situation</legend>
+                  <div class="choice-grid">
+                    <label class="choice-card">
+                      <input type="radio" :name="'situation-' + swimmer.id" value="new"
+                        x-model="swimmer.situation" @change="onSituationChange(swimmer)">
+                      <span>
+                        <strong>New to Rocket</strong>
+                        <small>New to competitive swimming, or transferring from another club. Full gear list for the new group.</small>
+                      </span>
+                    </label>
+                    <label class="choice-card">
+                      <input type="radio" :name="'situation-' + swimmer.id" value="moving"
+                        x-model="swimmer.situation" @change="onSituationChange(swimmer)">
+                      <span>
+                        <strong>Moving up a group</strong>
+                        <small>Already at Rocket. We show what carries over, what is new, and what to retire.</small>
+                      </span>
+                    </label>
+                  </div>
+                </fieldset>
+
+                <div class="field" x-show="swimmer.situation === 'moving'">
+                  <label :for="'current-' + swimmer.id">Current group</label>
+                  <select :id="'current-' + swimmer.id" x-model="swimmer.currentGroup"
+                    @change="swimmer.currentGroup = $event.target.value; onSituationChange(swimmer)">
+                    <option value="">Select current group</option>
+                    <template x-for="group in groups" :key="group.id">
+                      <option :value="group.id" x-text="group.name"></option>
+                    </template>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label :for="'new-' + swimmer.id" x-text="swimmer.situation === 'moving' ? 'New group' : 'New group'"></label>
+                  <select :id="'new-' + swimmer.id" x-model="swimmer.newGroup"
+                    @change="swimmer.newGroup = $event.target.value; persist()">
+                    <option value="">Select group</option>
+                    <template x-for="group in newGroupOptions(swimmer)" :key="group.id">
+                      <option :value="group.id" x-text="group.name"></option>
+                    </template>
+                  </select>
+                  <p class="hint" x-show="swimmer.situation === 'moving' && swimmer.currentGroup && !newGroupOptions(swimmer).length">
+                    There is no higher group on this path.
+                  </p>
+                </div>
+
+                <div class="btn-row">
+                  <button type="button" class="btn btn--ghost" x-show="swimmers.length > 1"
+                    @click="removeSwimmer(swimmer.id)">Remove this swimmer</button>
+                </div>
+              </div>
+            </template>
+
+            <div class="btn-row">
+              <button type="button" class="btn" :disabled="!allSetupReady" @click="goTo(2)">Continue to checklist</button>
+              <button type="button" class="btn btn--ghost" @click="resetSession()">Start over</button>
+            </div>
+          </section>
+
+          <!-- ═══ Step 2: Checklist ═══ -->
+          <section x-show="step === 2" :hidden="step !== 2" class="panel" aria-labelledby="list-heading">
+            <div class="section-head">
+              <h2 id="list-heading">Gear checklist</h2>
+              <p class="hint">Switch swimmers with the tabs. Review order combines everyone.</p>
+            </div>
+
+            <div class="tabs" role="tablist" aria-label="Swimmers">
+              <template x-for="(swimmer, index) in swimmers" :key="'tab2-' + swimmer.id">
+                <button type="button" class="tab" role="tab"
+                  :aria-selected="activeSwimmerId === swimmer.id"
+                  @click="activeSwimmerId = swimmer.id; persist()"
+                  x-text="swimmerLabel(swimmer, index)"></button>
+              </template>
+            </div>
+
+            <template x-for="(swimmer, index) in swimmers" :key="'list-' + swimmer.id">
+              <div x-show="activeSwimmerId === swimmer.id" class="panel">
+                <p class="info" x-show="swimmer.situation === 'new'">
+                  Only club-approved equipment is allowed at practice and meets. Gear from another club only counts if it matches the approved model.
+                </p>
+                <p class="info" x-show="sameBucketMove(swimmer) && !hasAnyNeed(swimmer)">
+                  <span x-text="groupName(swimmer.currentGroup)"></span> and
+                  <span x-text="groupName(swimmer.newGroup)"></span>
+                  share the same equipment list. Nothing new to buy.
+                </p>
+
+                <!-- Coach-supplied gear -->
+                <div class="section-head"><h2>Supplied by coaches</h2></div>
+                <div class="cards">
+                  <template x-for="item in needItems(swimmer, 'coach')" :key="item.id">
+                    <article class="item-card">
+                      <div class="item-card__top">
+                        <h3 x-text="item.name"></h3>
+                        <span class="badge badge--need">Need</span>
+                      </div>
+                      <div class="meta">
+                        <p x-show="item.model"><span x-text="item.model"></span></p>
+                        <p>Sizing: <span x-text="item.sizingNote || 'TBD'"></span></p>
+                        <p>Needed by: <span x-text="item.neededBy || 'TBD'"></span></p>
+                        <p>Price: <span x-text="priceLabel(item)"></span></p>
+                        <p x-show="item.notes" x-text="item.notes"></p>
+                      </div>
+                      <label class="check" x-show="swimmer.situation === 'new'">
+                        <input type="checkbox" :checked="owns(swimmer, item.id)" @change="toggleOwned(swimmer, item.id)">
+                        <span>I already own the approved model</span>
+                      </label>
+                      <label class="check" x-show="isOptional(item, bucketOf(swimmer.newGroup)) && !isRequired(item, bucketOf(swimmer.newGroup))">
+                        <input type="checkbox" :checked="optedIn(swimmer, item.id)" @change="toggleOptional(swimmer, item.id)">
+                        <span>Add to my list</span>
+                      </label>
+                    </article>
+                  </template>
+                  <p class="hint" x-show="!needItems(swimmer, 'coach').length">No coach-supplied items to buy.</p>
+                </div>
+
+                <!-- Store gear -->
+                <div class="section-head"><h2>Buy at a store</h2></div>
+                <div class="cards">
+                  <template x-for="item in needItems(swimmer, 'store')" :key="item.id">
+                    <article class="item-card">
+                      <div class="item-card__top">
+                        <h3 x-text="item.name"></h3>
+                        <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
+                          <span class="badge badge--need">Need</span>
+                          <span class="badge badge--discount" x-show="isSplashables(item)">20% club discount</span>
+                        </div>
+                      </div>
+                      <div class="meta">
+                        <p x-show="item.model">Approved model: <span x-text="item.model"></span></p>
+                        <p x-show="!item.stores.length">Store TBC</p>
+                        <template x-for="sid in item.stores" :key="sid">
+                          <p x-show="storeById(sid)" x-text="storeById(sid)?.name + (storeById(sid)?.discount ? ' — ' + storeById(sid).discount : '')"></p>
+                        </template>
+                        <p>Sizing: <span x-text="item.sizingNote || 'TBD'"></span></p>
+                        <p>Needed by: <span x-text="item.neededBy || 'TBD'"></span></p>
+                        <p x-show="item.notes" x-text="item.notes"></p>
+                        <p x-show="item.url"><a :href="item.url" target="_blank" rel="noopener" class="store-link">Buy now ↗</a></p>
+                      </div>
+                      <label class="check" x-show="swimmer.situation === 'new'">
+                        <input type="checkbox" :checked="owns(swimmer, item.id)" @change="toggleOwned(swimmer, item.id)">
+                        <span>I already own the approved model</span>
+                      </label>
+                      <label class="check" x-show="isOptional(item, bucketOf(swimmer.newGroup)) && !isRequired(item, bucketOf(swimmer.newGroup))">
+                        <input type="checkbox" :checked="optedIn(swimmer, item.id)" @change="toggleOptional(swimmer, item.id)">
+                        <span>Add to my list</span>
+                      </label>
+                    </article>
+                  </template>
+                  <p class="hint" x-show="!needItems(swimmer, 'store').length">No store items to buy.</p>
+                </div>
+
+                <!-- Retire -->
+                <template x-if="retireItems(swimmer).length">
+                  <div>
+                    <div class="section-head"><h2>Retire</h2></div>
+                    <div class="cards">
+                      <template x-for="item in retireItems(swimmer)" :key="'retire-' + item.id">
+                        <article class="item-card">
+                          <div class="item-card__top">
+                            <h3 x-text="item.name"></h3>
+                            <span class="badge badge--retire">Retire</span>
+                          </div>
+                          <p class="meta" x-text="retireNote(item)"></p>
+                          <p x-show="handDownToName(swimmer, item)">
+                            <span class="badge badge--hand" x-text="'Hand down to ' + handDownToName(swimmer, item)"></span>
+                          </p>
+                        </article>
+                      </template>
+                    </div>
+                  </div>
+                </template>
+
+                <!-- Optional -->
+                <template x-if="optionalItems(swimmer).length">
+                  <div>
+                    <div class="section-head">
+                      <h2>Optional</h2>
+                      <p class="hint">Not in the cart unless you add them.</p>
+                    </div>
+                    <div class="cards">
+                      <template x-for="item in optionalItems(swimmer)" :key="'opt-' + item.id">
+                        <article class="item-card">
+                          <div class="item-card__top">
+                            <h3 x-text="item.name"></h3>
+                            <span class="badge badge--optional">Optional</span>
+                          </div>
+                          <div class="meta">
+                            <p x-show="item.model" x-text="item.model"></p>
+                            <p>Price: <span x-text="priceLabel(item)"></span></p>
+                          </div>
+                          <label class="check">
+                            <input type="checkbox" :checked="optedIn(swimmer, item.id)" @change="toggleOptional(swimmer, item.id)">
+                            <span>Add to my list</span>
+                          </label>
+                        </article>
+                      </template>
+                    </div>
+                  </div>
+                </template>
+
+                <!-- Carrying over -->
+                <div class="carry" x-show="haveItems(swimmer).length">
+                  <button type="button"
+                    @click="carryOpen[swimmer.id] = !carryOpen[swimmer.id]; persist()"
+                    :aria-expanded="Boolean(carryOpen[swimmer.id])">
+                    <span>Carrying over (<span x-text="haveItems(swimmer).length"></span>)</span>
+                    <span x-text="carryOpen[swimmer.id] ? 'Hide' : 'Show'"></span>
+                  </button>
+                  <div class="carry__list" x-show="carryOpen[swimmer.id]">
+                    <template x-for="item in haveItems(swimmer)" :key="'have-' + item.id">
+                      <div class="carry__item">
+                        <span>
+                          <span x-text="item.name"></span>
+                          <label class="check" x-show="swimmer.situation === 'new' && owns(swimmer, item.id)">
+                            <input type="checkbox" :checked="owns(swimmer, item.id)" @change="toggleOwned(swimmer, item.id)">
+                            <span>I already own the approved model</span>
+                          </label>
+                        </span>
+                        <span class="badge badge--have" x-text="receivedHandDown(swimmer, item) ? 'From ' + handDownFromName(swimmer, item) : 'Already have'"></span>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </section>
+
+          <!-- ═══ Step 3: Review ═══ -->
+          <section x-show="step === 3" :hidden="step !== 3" class="panel" aria-labelledby="review-heading">
+            <div class="section-head">
+              <h2 id="review-heading">Checkout summary</h2>
+              <p class="hint">Pay the club for coach gear. Buy store gear yourself. Then paste the Discord note after you pay.</p>
+            </div>
+
+            <!-- All set -->
+            <div class="all-set" x-show="sessionNeedItems().length === 0">
+              <div class="emoji" aria-hidden="true">🎉</div>
+              <h3>You're all set!</h3>
+              <p class="hint">Your swimmer has all the gear needed for this level.</p>
+            </div>
+
+            <!-- A. Coach gear -->
+            <article class="review-block" x-show="sessionNeedItems().length > 0">
+              <h2>A. Coach-supplied gear</h2>
+              <p><span x-text="payment.method"></span></p>
+              <div class="field">
+                <label for="pay-email">Send payment to</label>
+                <div class="btn-row">
+                  <input id="pay-email" type="text" readonly :value="payment.email">
+                  <button type="button" class="btn btn--ghost" @click="copy('Email', payment.email)">Copy email</button>
+                </div>
+              </div>
+              <template x-for="(swimmer, index) in swimmers" :key="'pay-' + swimmer.id">
+                <div>
+                  <h3 x-text="swimmerLabel(swimmer, index)"></h3>
+                  <p class="hint">Memo: <span x-text="memoFor(swimmer)"></span></p>
+                  <template x-for="item in swimmerCoachRows(swimmer)" :key="'cline-' + swimmer.id + item.id">
+                    <div class="line">
+                      <span x-text="lineLabel(swimmer, item)"></span>
+                      <span x-text="lineCost(swimmer, item) == null ? 'Price TBC' : ('$' + lineCost(swimmer, item).toFixed(2))"></span>
+                    </div>
+                  </template>
+                  <p class="hint" x-show="!swimmerCoachRows(swimmer).length">No coach items to pay for this swimmer.</p>
+                  <p class="subtotal">
+                    <span>Subtotal</span>
+                    <span x-text="swimmerCoachSubtotal(swimmer).incomplete && swimmerCoachSubtotal(swimmer).total === 0 ? 'Price TBC' : ('$' + swimmerCoachSubtotal(swimmer).total.toFixed(2) + (swimmerCoachSubtotal(swimmer).incomplete ? ' (incomplete)' : ''))"></span>
+                  </p>
+                  <template x-for="note in pickupNotes(swimmer)" :key="'pick-' + swimmer.id + note.name">
+                    <p class="hint"><span x-text="note.name"></span>: <span x-text="note.pickup"></span></p>
+                  </template>
+                </div>
+              </template>
+              <p class="grand">
+                <span>Grand total</span>
+                <span x-text="coachGrand.incomplete && coachGrand.total === 0 ? 'Price TBC' : ('$' + coachGrand.total.toFixed(2) + (coachGrand.incomplete ? ' (incomplete)' : ''))"></span>
+              </p>
+              <p class="hint" x-show="coachGrand.incomplete">Some coach prices are TBC, so this total is incomplete.</p>
+
+              <div class="field">
+                <label for="discord-handle">Parent Discord handle <span class="hint">(optional)</span></label>
+                <input id="discord-handle" type="text" autocomplete="off" x-model="parentDiscord" @input="persist()" placeholder="@yourhandle">
+              </div>
+              <div class="field">
+                <label for="pay-date">Payment date</label>
+                <input id="pay-date" type="date" x-model="paymentDate" @change="persist()">
+              </div>
+              <p>After paying, paste this into your DM in the gear channel on Discord.</p>
+              <pre class="pre" x-text="discordMessage()"></pre>
+              <div class="btn-row no-print">
+                <button type="button" class="btn" @click="copy('Discord message', discordMessage())">Copy for Discord</button>
+              </div>
+            </article>
+
+            <!-- B. Store gear -->
+            <article class="review-block" x-show="sessionNeedItems().length > 0">
+              <h2>B. Store gear</h2>
+              <template x-if="!storeNeedGroups().length">
+                <p class="hint">No store items in this order.</p>
+              </template>
+              <template x-for="group in storeNeedGroups()" :key="group.id">
+                <div class="store-group">
+                  <h3>
+                    <template x-if="group.url">
+                      <a :href="group.url" target="_blank" rel="noopener" x-text="group.name"></a>
+                    </template>
+                    <template x-if="!group.url">
+                      <span x-text="group.name"></span>
+                    </template>
+                  </h3>
+                  <p class="hint" x-show="group.location" x-text="group.location"></p>
+                  <p class="hint" x-show="group.discount" x-text="group.discount" style="color:var(--discount);font-weight:600;"></p>
+                  <template x-for="row in group.rows" :key="row.swimmer.id + row.item.id">
+                    <div class="line">
+                      <span>
+                        <strong x-text="row.item.name"></strong>
+                        <span x-show="row.item.model"> — <span x-text="row.item.model"></span></span>
+                        <br>
+                        <span class="hint">
+                          <span x-text="swimmerLabel(row.swimmer, swimmers.indexOf(row.swimmer))"></span>
+                          · Sizing: <span x-text="row.item.sizingNote || 'TBD'"></span>
+                        </span>
+                      </span>
+                      <span x-show="row.item.url">
+                        <a :href="row.item.url" target="_blank" rel="noopener" class="store-link">Buy ↗</a>
+                      </span>
+                    </div>
+                  </template>
+                </div>
+              </template>
+              <div class="btn-row no-print" x-show="storeNeedGroups().length">
+                <button type="button" class="btn btn--ghost" @click="copy('Shopping list', shoppingListText())">Copy shopping list</button>
+              </div>
+            </article>
+
+            <!-- C. Timeline -->
+            <article class="review-block" x-show="sessionNeedItems().length > 0">
+              <h2>C. Timeline</h2>
+              <template x-for="group in timelineGroups()" :key="group.neededBy">
+                <div>
+                  <h3 class="timeline-heading">
+                    <span class="icon" x-text="timelineIcon(group.neededBy)"></span>
+                    <span x-text="group.neededBy === 'TBD' ? 'Timing TBD' : group.neededBy"></span>
+                  </h3>
+                  <template x-for="row in group.rows" :key="'t-' + row.swimmer.id + row.item.id">
+                    <div class="line">
+                      <span>
+                        <span x-text="row.item.name"></span> ·
+                        <span x-text="swimmerLabel(row.swimmer, swimmers.indexOf(row.swimmer))"></span>
+                      </span>
+                    </div>
+                  </template>
+                </div>
+              </template>
+              <p class="hint" x-show="!timelineGroups().length">Nothing to buy yet.</p>
+            </article>
+
+            <div class="btn-row no-print">
+              <button type="button" class="btn btn--secondary" @click="printPage()">Print / Save as PDF</button>
+              <button type="button" class="btn btn--ghost" @click="goTo(2)">Back to checklist</button>
+              <button type="button" class="btn btn--ghost" @click="resetSession()">Start over</button>
+            </div>
+          </section>
+        </div>
+      </template>
+    </main>
+
+    <!-- Sticky bar -->
+    <div class="sticky-bar no-print" x-show="loaded && step === 2">
+      <div class="sticky-bar__inner">
+        <div class="totals">
+          <span><strong x-text="footerTotals.count"></strong> items</span>
+          <span>Coach <strong x-text="footerTotals.coach.incomplete && footerTotals.coach.total === 0 ? 'TBC' : ('$' + footerTotals.coach.total.toFixed(2))"></strong></span>
+          <span>Store <strong x-text="footerTotals.store.incomplete && footerTotals.store.total === 0 ? 'TBC' : ('$' + footerTotals.store.total.toFixed(2))"></strong></span>
+        </div>
+        <p class="note-incomplete" x-show="footerTotals.coach.incomplete || footerTotals.store.incomplete">
+          Some prices are TBC, so totals are incomplete.
+        </p>
+        <button type="button" class="btn" @click="goTo(3)">Review order</button>
       </div>
     </div>
-  </header>
 
-  <!-- Main Content -->
-  <main id="main-content" class="max-w-5xl mx-auto px-4 py-8" role="main">
-
-    <!-- Loading State (Issue #20) — shown while data loads -->
-    <section id="loading-state" class="mb-8" aria-label="Loading gear data">
-      <div class="bg-white rounded-xl shadow-md p-6">
-        <div class="skeleton skeleton-heading" aria-hidden="true"></div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <div class="skeleton skeleton-text" style="width: 40%;" aria-hidden="true"></div>
-            <div class="skeleton skeleton-select" aria-hidden="true"></div>
-          </div>
-          <div>
-            <div class="skeleton skeleton-text" style="width: 40%;" aria-hidden="true"></div>
-            <div class="skeleton skeleton-select" aria-hidden="true"></div>
-          </div>
-        </div>
+    <!-- Footer -->
+    <footer class="site-footer" role="contentinfo">
+      <div class="site-footer__inner">
+        <p>RocketSwim Gear Guider · <a href="https://rocketswim.com" target="_blank" rel="noopener">rocketswim.com</a></p>
+        <p class="tagline">Passion + Process = Performance 🚀</p>
+        <p x-show="lastUpdated" class="hint">List last updated <span x-text="lastUpdated"></span></p>
       </div>
-      <p class="sr-only">Loading gear data, please wait…</p>
-    </section>
-
-    <!-- ═══ Wizard Step Indicator (Issue #35) ═══ -->
-    <nav id="wizard-nav" class="hidden mb-8 no-print" aria-label="Gear Guider steps">
-      <ol class="flex items-center justify-center gap-0">
-        <!-- Step 1 -->
-        <li class="wizard-step" data-step="1">
-          <button id="wizard-btn-1" class="wizard-step-btn active" aria-current="step" aria-label="Step 1: Setup — select swimmer level">
-            <span class="wizard-step-number">1</span>
-            <span class="wizard-step-label">Setup</span>
-          </button>
-        </li>
-        <li class="wizard-connector" aria-hidden="true"><div class="wizard-connector-line"></div></li>
-        <!-- Step 2 -->
-        <li class="wizard-step" data-step="2">
-          <button id="wizard-btn-2" class="wizard-step-btn" disabled aria-label="Step 2: Checklist — mark owned gear">
-            <span class="wizard-step-number">2</span>
-            <span class="wizard-step-label">Checklist</span>
-          </button>
-        </li>
-        <li class="wizard-connector" aria-hidden="true"><div class="wizard-connector-line"></div></li>
-        <!-- Step 3 -->
-        <li class="wizard-step" data-step="3">
-          <button id="wizard-btn-3" class="wizard-step-btn" disabled aria-label="Step 3: Review — shopping list and payment">
-            <span class="wizard-step-number">3</span>
-            <span class="wizard-step-label">Review</span>
-          </button>
-        </li>
-      </ol>
-    </nav>
-
-    <!-- ═══ Step 1: Setup ═══ -->
-    <section id="step-1" class="wizard-panel hidden" aria-label="Step 1: Setup">
-
-      <!-- Swimmer Tabs (Issue #39) -->
-      <div id="swimmer-tabs" class="bg-white rounded-xl shadow-md p-4 mb-4 no-print" aria-label="Swimmers">
-        <div class="flex items-center gap-2 flex-wrap">
-          <div id="swimmer-tab-list" class="flex items-center gap-1 flex-wrap" role="tablist" aria-label="Swimmer tabs"></div>
-          <button id="add-swimmer-btn" class="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 hover:bg-teal-50 px-2 py-1.5 rounded-lg transition-colors font-semibold" aria-label="Add another swimmer">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Add Swimmer
-          </button>
-        </div>
-      </div>
-
-      <div class="bg-white rounded-xl shadow-md p-6 mb-6">
-        <h2 class="text-lg font-bold text-navy-900 mb-4 flex items-center gap-2">
-          <svg class="w-5 h-5 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-          <span id="setup-heading">Select Swimmer's Level</span>
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label for="level-from" class="block text-sm font-semibold text-navy-700 mb-2">Coming from:</label>
-            <select id="level-from" class="w-full rounded-lg border-2 border-gray-200 px-4 py-3 text-base focus:border-teal-500 focus:ring-2 focus:ring-teal-200 transition-colors cursor-pointer bg-white" aria-describedby="level-from-help">
-              <option value="">New to RocketSwim / No prior gear</option>
-            </select>
-            <p id="level-from-help" class="text-xs text-gray-500 mt-1">Select if upgrading from another level or joining from another club</p>
-          </div>
-          <div>
-            <label for="level-to" class="block text-sm font-semibold text-navy-700 mb-2">Moving to:</label>
-            <select id="level-to" class="w-full rounded-lg border-2 border-gray-200 px-4 py-3 text-base focus:border-teal-500 focus:ring-2 focus:ring-teal-200 transition-colors cursor-pointer bg-white" aria-describedby="level-to-help">
-              <option value="">Select target level…</option>
-            </select>
-            <p id="level-to-help" class="text-xs text-gray-500 mt-1">The level your swimmer is entering</p>
-          </div>
-        </div>
-        <!-- Level info bar -->
-        <div id="level-info" class="hidden mt-4 p-3 bg-teal-50 rounded-lg border border-teal-100" role="status" aria-live="polite">
-          <p id="level-info-text" class="text-sm text-teal-800"></p>
-        </div>
-      </div>
-      <!-- Step 1 → Continue button -->
-      <div class="flex justify-end">
-        <button id="btn-to-step2" class="wizard-next-btn bg-teal-600 hover:bg-teal-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2" disabled aria-label="Continue to checklist">
-          Continue to Checklist
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-        </button>
-      </div>
-    </section>
-
-    <!-- ═══ Step 2: Checklist ═══ -->
-    <section id="step-2" class="wizard-panel hidden" aria-label="Step 2: Checklist">
-      <div class="bg-white rounded-xl shadow-md p-6 mb-6">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-bold text-navy-900 flex items-center gap-2">
-            <svg class="w-5 h-5 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-            <span id="checklist-title">Your Gear Checklist</span>
-          </h2>
-          <span id="checklist-count" class="text-sm text-gray-500" aria-live="polite"></span>
-        </div>
-        <p class="text-sm text-gray-600 mb-4" id="checklist-instructions"></p>
-        <div id="checklist-items" class="space-y-2" role="group" aria-label="Gear items checklist"></div>
-      </div>
-      <!-- Step 2 → Back + Continue buttons -->
-      <div class="flex justify-between">
-        <button id="btn-back-to-step1" class="wizard-back-btn bg-gray-200 hover:bg-gray-300 text-navy-700 px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2" aria-label="Back to setup">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-          Back
-        </button>
-        <button id="btn-to-step3" class="wizard-next-btn bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2" aria-label="Continue to review">
-          Review Shopping List
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-        </button>
-      </div>
-    </section>
-
-    <!-- ═══ Step 3: Review ═══ -->
-    <section id="step-3" class="wizard-panel hidden" aria-label="Step 3: Review">
-      <!-- Shopping List -->
-      <div class="bg-white rounded-xl shadow-md p-6 mb-6">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-bold text-navy-900 flex items-center gap-2">
-            <svg class="w-5 h-5 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
-            <span id="shopping-title">Your Gear Shopping List</span>
-          </h2>
-          <div class="flex gap-2 no-print">
-            <button onclick="window.print()" class="text-sm px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-navy-700 transition-colors flex items-center gap-1" aria-label="Print shopping list">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-              Print
-            </button>
-          </div>
-        </div>
-
-        <!-- Required Gear -->
-        <div id="shopping-required" class="mb-6"></div>
-
-        <!-- Optional Gear -->
-        <div id="shopping-optional" class="mb-6"></div>
-
-        <!-- All Set Message -->
-        <div id="all-set" class="hidden text-center py-8" role="status">
-          <div class="text-5xl mb-3" aria-hidden="true">🎉</div>
-          <h3 class="text-xl font-bold text-navy-900 mb-2">You're all set!</h3>
-          <p class="text-gray-600">Your swimmer has all the gear needed for this level.</p>
-        </div>
-
-        <!-- Retire Section (Issue #36) -->
-        <div id="retire-section" class="hidden mb-6"></div>
-
-        <!-- Cart Summary -->
-        <div id="cart-summary" class="hidden mt-6 border-t pt-6">
-          <h3 class="font-bold text-navy-900 mb-4 flex items-center gap-2">
-            <svg class="w-5 h-5 text-gold-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            Payment Summary
-          </h3>
-          <div id="cart-details" class="space-y-4"></div>
-        </div>
-      </div>
-
-      <!-- Stores Info -->
-      <div id="stores-section" class="mb-6 no-print" aria-label="Store information">
-        <div class="bg-white rounded-xl shadow-md p-6">
-          <h2 class="text-lg font-bold text-navy-900 mb-4 flex items-center gap-2">
-            <svg class="w-5 h-5 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-            Where to Buy
-          </h2>
-          <div id="stores-list" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
-        </div>
-      </div>
-
-      <!-- Step 3 → Back + Start Over buttons -->
-      <div class="flex justify-between">
-        <button id="btn-back-to-step2" class="wizard-back-btn bg-gray-200 hover:bg-gray-300 text-navy-700 px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2" aria-label="Back to checklist">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-          Back to Checklist
-        </button>
-        <button id="btn-start-over" class="bg-navy-900 hover:bg-navy-800 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2" aria-label="Start over with a new swimmer">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-          Start Over
-        </button>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- Footer -->
-  <footer class="bg-navy-900 text-gray-400 text-center py-6 mt-12" role="contentinfo">
-    <p class="text-sm">RocketSwim Gear Guider &middot; <a href="https://rocketswim.com" target="_blank" rel="noopener" class="text-teal-400 hover:text-teal-300 transition-colors">rocketswim.com</a></p>
-    <p class="text-xs mt-1 text-gray-500">Passion + Process = Performance 🚀</p>
-  </footer>
-
-  <!-- Sticky Bottom Bar (Issue #42) — visible during Step 2 checklist -->
-  <div id="sticky-bar" class="hidden fixed bottom-0 left-0 right-0 bg-navy-900 text-white shadow-2xl z-40 no-print" role="status" aria-live="polite" aria-label="Shopping summary">
-    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-      <div class="flex items-center gap-4 flex-wrap text-sm">
-        <span id="sticky-items-needed" class="flex items-center gap-1.5">
-          <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
-          <span class="font-semibold">0 items</span> to buy
-        </span>
-        <span class="hidden sm:inline text-navy-300">|</span>
-        <span id="sticky-club-total" class="hidden sm:flex items-center gap-1.5">
-          <svg class="w-4 h-4 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          Club <span class="font-semibold">$0</span>
-        </span>
-        <span class="hidden sm:inline text-navy-300">|</span>
-        <span id="sticky-store-count" class="hidden sm:flex items-center gap-1.5">
-          <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-          <span class="font-semibold">0</span> store items
-        </span>
-      </div>
-      <button id="sticky-review-btn" class="bg-teal-500 hover:bg-teal-400 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0" aria-label="Review shopping list">
-        Review List
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-      </button>
-    </div>
+    </footer>
   </div>
 
-  <!-- Toast notification container -->
-  <div id="toast-container" class="fixed bottom-4 right-4 z-50" aria-live="assertive" aria-atomic="true"></div>
-
-  <script src="js/gear-data.js"></script>
-  <script src="js/app.js"></script>
+  <!-- Toast container -->
+  <div id="toast-container" class="toast-container" aria-live="assertive" aria-atomic="true"></div>
 </body>
 </html>
