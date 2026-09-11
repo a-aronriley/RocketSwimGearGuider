@@ -641,6 +641,7 @@
           ${badgeHtml}
         </div>
         ${gearItem.model ? '<p class="text-xs text-teal-700 mt-0.5 font-medium">' + gearItem.model + '</p>' : ''}
+        ${gearItem.sizing ? '<p class="text-xs text-purple-600 mt-0.5">📏 ' + gearItem.sizing + '</p>' : ''}
         ${gearItem.notes ? '<p class="text-xs text-gray-500 mt-0.5">' + gearItem.notes + '</p>' : ''}
       </div>
       ${getSourceBadge(gearItem)}
@@ -806,6 +807,50 @@
 
     $allSet.classList.add('hidden');
 
+    // Timeline grouping helper (Issue #40)
+    const timelineOrder = (gearData.neededByOrder || []);
+    function groupByTimeline(items) {
+      const groups = {};
+      const noTimeline = [];
+      items.forEach(g => {
+        const t = g.neededBy || '';
+        if (t && timelineOrder.includes(t)) {
+          if (!groups[t]) groups[t] = [];
+          groups[t].push(g);
+        } else {
+          noTimeline.push(g);
+        }
+      });
+      // Return ordered array of { label, items }
+      const result = [];
+      timelineOrder.forEach(t => {
+        if (groups[t] && groups[t].length > 0) result.push({ label: t, items: groups[t] });
+      });
+      if (noTimeline.length > 0) result.push({ label: '', items: noTimeline });
+      return result;
+    }
+
+    const timelineIcons = { 'Day 1': '🏁', 'First week': '📅', 'First meet': '🏅', 'First month': '📆', 'When needed': '⏳' };
+
+    function renderTimelineGroups(items) {
+      const groups = groupByTimeline(items);
+      // If only one group or no timeline data, render flat
+      if (groups.length <= 1) return items.map(g => renderGearCard(g)).join('');
+      return groups.map(grp => {
+        const icon = timelineIcons[grp.label] || '📦';
+        const label = grp.label || 'Other';
+        return `
+          <div class="mt-3 first:mt-0">
+            <p class="text-xs font-semibold text-purple-700 mb-1.5 flex items-center gap-1.5">
+              <span>${icon}</span> ${label}
+              <span class="text-gray-400 font-normal">(${grp.items.length})</span>
+            </p>
+            <div class="space-y-2">${grp.items.map(g => renderGearCard(g)).join('')}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
     // Single swimmer: original layout
     if (swimmers.length === 1 || swimmerSections.length === 1) {
       const s = swimmerSections[0];
@@ -817,7 +862,7 @@
           <h3 class="text-sm font-bold text-navy-600 uppercase tracking-wider mb-3 flex items-center gap-2">
             Required Gear <span class="text-xs font-normal text-gray-500">(${s.required.length} items)</span>
           </h3>
-          <div class="space-y-2">${s.required.map(g => renderGearCard(g)).join('')}</div>
+          <div>${renderTimelineGroups(s.required)}</div>
         `;
       } else {
         $shoppingRequired.innerHTML = '';
@@ -828,7 +873,7 @@
           <h3 class="text-sm font-bold text-navy-600 uppercase tracking-wider mb-3 mt-6 flex items-center gap-2">
             Optional Gear <span class="text-xs font-normal text-gray-500">(${s.optional.length} items)</span>
           </h3>
-          <div class="space-y-2">${s.optional.map(g => renderGearCard(g)).join('')}</div>
+          <div>${renderTimelineGroups(s.optional)}</div>
         `;
       } else {
         $shoppingOptional.innerHTML = '';
@@ -849,7 +894,7 @@
             <h3 class="text-sm font-bold text-navy-600 uppercase tracking-wider mb-3 ${reqHtml ? 'mt-6' : ''} flex items-center gap-2">
               👤 ${label} — Required <span class="text-xs font-normal text-gray-500">(${sec.required.length} items)</span>
             </h3>
-            <div class="space-y-2">${sec.required.map(g => renderGearCard(g)).join('')}</div>
+            <div>${renderTimelineGroups(sec.required)}</div>
           `;
         }
 
@@ -858,7 +903,7 @@
             <h3 class="text-sm font-bold text-navy-600 uppercase tracking-wider mb-3 ${optHtml ? 'mt-6' : 'mt-6'} flex items-center gap-2">
               👤 ${label} — Optional <span class="text-xs font-normal text-gray-500">(${sec.optional.length} items)</span>
             </h3>
-            <div class="space-y-2">${sec.optional.map(g => renderGearCard(g)).join('')}</div>
+            <div>${renderTimelineGroups(sec.optional)}</div>
           `;
         }
       });
@@ -965,6 +1010,7 @@
             ${isSplashables ? '<span class="text-xs bg-teal-100 text-teal-700 px-1.5 py-0.5 rounded font-medium">20% club discount</span>' : ''}
           </div>
           ${gear.model ? `<p class="text-xs text-teal-700 mt-0.5 font-medium">${gear.model}</p>` : ''}
+          ${gear.sizing ? `<p class="text-xs text-purple-600 mt-0.5">📏 ${gear.sizing}</p>` : ''}
           ${gear.notes ? `<p class="text-xs text-gray-500 mt-1">${gear.notes}</p>` : ''}
         </div>
         <div class="flex items-center gap-2 shrink-0">
