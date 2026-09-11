@@ -1,0 +1,312 @@
+{
+  "levels": [
+    { "id": "J3", "name": "Junior 3", "ageRange": "7-9", "competitive": "Intro", "coachRatio": "10:1" },
+    { "id": "J2", "name": "Junior 2", "ageRange": "7-10", "competitive": "Intro", "coachRatio": "12:1" },
+    { "id": "J1", "name": "Junior 1", "ageRange": "8-11", "competitive": true, "coachRatio": "15:1" },
+    { "id": "S3", "name": "Senior 3", "ageRange": "11-14", "competitive": true, "coachRatio": "25:1" },
+    { "id": "S2", "name": "Senior 2", "ageRange": "12-15", "competitive": true, "coachRatio": "25:1" },
+    { "id": "S1", "name": "Senior 1", "ageRange": "13-16", "competitive": true, "coachRatio": "25:1" },
+    { "id": "CMS", "name": "Candidate to Master of Sport", "ageRange": "15-17", "competitive": true, "coachRatio": "25:1" },
+    { "id": "MS", "name": "Master of Sport", "ageRange": "17-20", "competitive": true, "coachRatio": "25:1" },
+    { "id": "MSIC", "name": "Master of Sport International Class", "ageRange": "18-25", "competitive": true, "coachRatio": "25:1" },
+    { "id": "Masters", "name": "Masters/Adults", "ageRange": "25+", "competitive": "Optional", "coachRatio": "20:1" }
+  ],
+  "categories": ["WATER", "DRYLAND"],
+  "gear": [
+    {
+      "id": "fins",
+      "name": "Fins",
+      "category": "WATER",
+      "levels": { "J3": "R", "J2": "R", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "R" },
+      "priceFromClub": null,
+      "purchaseUrl": "https://splashables.com/store/speedo-switchblade-training-fin.html",
+      "source": "store",
+      "storeName": "Splashables",
+      "notes": ""
+    },
+    {
+      "id": "club-swim-cap",
+      "name": "Club Swim Cap",
+      "category": "WATER",
+      "levels": { "J3": "R", "J2": "R", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "R" },
+      "priceFromClub": 20,
+      "purchaseUrl": null,
+      "source": "club",
+      "notes": "First cap is free"
+    },
+    {
+      "id": "club-tshirt",
+      "name": "Club T-shirt",
+      "category": "WATER",
+      "levels": { "J3": "R", "J2": "R", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
+      "priceFromClub": 20,
+      "purchaseUrl": null,
+      "source": "club",
+      "notes": "Available from club / ask coach"
+    },
+    {
+      "id": "club-mesh-bag",
+      "name": "Club Mesh Bag",
+      "category": "WATER",
+      "levels": { "J3": "", "J2": "", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
+      "priceFromClub": 40,
+      "purchaseUrl": null,
+      "source": "club",
+      "notes": "Available from club / ask coach"
+    },
+    {
+      "id": "kickboard",
+      "name": "Kickboard",
+      "category": "WATER",
+      "levels": { "J3": "R", "J2": "R", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
+      "priceFromClub": null,
+      "purchaseUrl": null,
+      "source": "coach",
+      "notes": "Ask coach"
+    },
+    {
+      "id": "pullbuoy",
+      "name": "Pullbuoy",
+      "category": "WATER",
+      "levels": { "J3": "", "J2": "", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "R" },
+      "priceFromClub": 15,
+      "purchaseUrl": null,
+      "source": "club",
+      "notes": "Available from club / ask coach"
+    },
+    {
+      "id": "paddles-small-0",
+      "name": "Paddles small #0",
+      "category": "WATER",
+      "levels": { "J3": "", "J2": "", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
+      "priceFromClub": null,
+      "purchaseUrl": "https://team-aquatic.com/products/strokemaker-paddles",
+      "source": "store",
+      "storeName": "TeamAquatics",
+      "notes": ""
+    },
+    {
+      "id": "paddles-medium-1",
+      "name": "Paddles medium #1",
+      "category": "WATER",
+      "levels": { "J3": "", "J2": "", "J1": "", "S3": "", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
+      "priceFromClub": null,
+      "purchaseUrl": "https://team-aquatic.com/products/strokemaker-paddles",
+      "source": "store",
+      "storeName": "TeamAquatics",
+      "notes": ""
+    },
+    {
+      "id": "snorkel",
+      "name": "Snorkel",
+      "category": "WATER",
+      "levels": { "J3": "", "J2": "", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "R" },
+      "priceFromClub": null,
+      "purchaseUrl": "https://splashables.com/store/finis-swimmers-snorkel.html",
+      "source": "store",
+      "storeName": "Splashables",
+      "notes": ""
+    },
+    {
+      "id": "parachute",
+      "name": "Parachute with 1.5m stretch cord",
+      "category": "WATER",
+      "levels": { "J3": "", "J2": "", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
+      "priceFromClub": 35,
+      "purchaseUrl": null,
+      "source": "club",
+      "notes": "For stationary-static swimming. Available from club / ask coach"
+    },
+    {
+      "id": "stroller-hook",
+      "name": "Stroller hook",
+      "category": "WATER",
+      "levels": { "J3": "", "J2": "", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
+      "priceFromClub": null,
+      "purchaseUrl": "https://www.amazon.ca/Jolly-Jumper-The-Smarter-Hook/dp/B07171FPCC",
+      "source": "amazon",
+      "notes": ""
+    },
+    {
+      "id": "ankle-band",
+      "name": "Ankle Band",
+      "category": "WATER",
+      "levels": { "J3": "", "J2": "", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
+      "priceFromClub": null,
+      "purchaseUrl": null,
+      "source": "coach",
+      "notes": "Available from club / ask coach"
+    },
+    {
+      "id": "tennis-ball",
+      "name": "Tennis ball",
+      "category": "WATER",
+      "levels": { "J3": "", "J2": "R", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
+      "priceFromClub": null,
+      "purchaseUrl": null,
+      "source": "any",
+      "notes": "Available anywhere"
+    },
+    {
+      "id": "water-bottle",
+      "name": "Plastic Water Bottle",
+      "category": "WATER",
+      "levels": { "J3": "", "J2": "R", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "R" },
+      "priceFromClub": null,
+      "purchaseUrl": null,
+      "source": "any",
+      "notes": "Available anywhere"
+    },
+    {
+      "id": "plastic-cup",
+      "name": "Plastic cup (for backstroke)",
+      "category": "WATER",
+      "levels": { "J3": "", "J2": "R", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
+      "priceFromClub": null,
+      "purchaseUrl": "https://www.amazon.ca/Frcctre-Children-Drinking-Unbreakable-Dishwasher/dp/B09HZY91FJ",
+      "source": "amazon",
+      "notes": ""
+    },
+    {
+      "id": "drag-suit",
+      "name": "Drag suit",
+      "category": "WATER",
+      "levels": { "J3": "", "J2": "", "J1": "", "S3": "", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
+      "priceFromClub": null,
+      "purchaseUrl": "https://www.swimoutlet.com/products/arena-mens-reversible-drag-suit-8190083",
+      "source": "store",
+      "storeName": "SwimOutlet",
+      "notes": ""
+    },
+    {
+      "id": "drag-suit-pockets",
+      "name": "Drag suit with pockets",
+      "category": "WATER",
+      "levels": { "J3": "", "J2": "", "J1": "", "S3": "", "S2": "", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
+      "priceFromClub": null,
+      "purchaseUrl": "https://www.swimoutlet.com/products/finis-ultimate-drag-suit-18907",
+      "source": "store",
+      "storeName": "SwimOutlet",
+      "notes": ""
+    },
+    {
+      "id": "drag-socks",
+      "name": "Drag socks",
+      "category": "WATER",
+      "levels": { "J3": "", "J2": "", "J1": "", "S3": "", "S2": "", "S1": "", "CMS": "O", "MS": "O", "MSIC": "O", "Masters": "" },
+      "priceFromClub": null,
+      "purchaseUrl": null,
+      "source": "store",
+      "notes": ""
+    },
+    {
+      "id": "yoga-mat",
+      "name": "Yoga mat",
+      "category": "DRYLAND",
+      "levels": { "J3": "", "J2": "", "J1": "", "S3": "", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
+      "priceFromClub": null,
+      "purchaseUrl": null,
+      "source": "any",
+      "notes": "Available anywhere"
+    },
+    {
+      "id": "stretch-cord",
+      "name": "Stretch cord with paddles (pullies)",
+      "category": "DRYLAND",
+      "levels": { "J3": "", "J2": "", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
+      "priceFromClub": 45,
+      "purchaseUrl": null,
+      "source": "club",
+      "notes": "Available from club / ask coach"
+    },
+    {
+      "id": "resistance-band",
+      "name": "Resistance Band",
+      "category": "DRYLAND",
+      "levels": { "J3": "", "J2": "R", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
+      "priceFromClub": 10,
+      "purchaseUrl": null,
+      "source": "club",
+      "notes": "Available from club / ask coach"
+    },
+    {
+      "id": "skipping-rope",
+      "name": "Skipping Rope",
+      "category": "DRYLAND",
+      "levels": { "J3": "", "J2": "R", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
+      "priceFromClub": null,
+      "purchaseUrl": null,
+      "source": "any",
+      "notes": "Available anywhere"
+    },
+    {
+      "id": "massage-roller",
+      "name": "Massage Roller",
+      "category": "DRYLAND",
+      "levels": { "J3": "", "J2": "", "J1": "", "S3": "", "S2": "O", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
+      "priceFromClub": null,
+      "purchaseUrl": "https://www.amazon.ca/Dr-Health-Tissue-Fitness-Massage/dp/B019EAO1FG",
+      "source": "amazon",
+      "notes": ""
+    },
+    {
+      "id": "club-parka",
+      "name": "Club Parka with Logo",
+      "category": "DRYLAND",
+      "levels": { "J3": "", "J2": "", "J1": "O", "S3": "O", "S2": "O", "S1": "O", "CMS": "O", "MS": "O", "MSIC": "O", "Masters": "" },
+      "priceFromClub": 95,
+      "purchaseUrl": null,
+      "source": "club",
+      "notes": ""
+    },
+    {
+      "id": "club-tracksuit",
+      "name": "Club Tracksuit with Logo",
+      "category": "DRYLAND",
+      "levels": { "J3": "", "J2": "", "J1": "O", "S3": "O", "S2": "O", "S1": "O", "CMS": "O", "MS": "O", "MSIC": "O", "Masters": "" },
+      "priceFromClub": 115,
+      "purchaseUrl": null,
+      "source": "club",
+      "notes": ""
+    },
+    {
+      "id": "club-hoodie",
+      "name": "Club Hoodie",
+      "category": "DRYLAND",
+      "levels": { "J3": "", "J2": "", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
+      "priceFromClub": 45,
+      "purchaseUrl": null,
+      "source": "club",
+      "notes": ""
+    },
+    {
+      "id": "club-winter-hat",
+      "name": "Club Winter Hat",
+      "category": "DRYLAND",
+      "levels": { "J3": "", "J2": "R", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
+      "priceFromClub": 20,
+      "purchaseUrl": null,
+      "source": "coach",
+      "notes": "Ask coach"
+    },
+    {
+      "id": "club-bucket-hat",
+      "name": "Club Bucket Hat",
+      "category": "DRYLAND",
+      "levels": { "J3": "", "J2": "R", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
+      "priceFromClub": 20,
+      "purchaseUrl": null,
+      "source": "coach",
+      "notes": "Ask coach"
+    }
+  ],
+  "stores": [
+    { "name": "Splashables", "location": "Toronto", "discount": "20% club discount", "url": "https://splashables.com" },
+    { "name": "TeamAquatics", "location": "Mississauga/Burlington", "discount": null, "url": "https://team-aquatic.com" },
+    { "name": "SwimOutlet", "location": "Online", "discount": null, "url": "https://www.swimoutlet.com" }
+  ],
+  "payment": {
+    "clubEmail": "payments@rocketswim.com",
+    "coachContact": "DM in #gear channel on Discord"
+  }
+}

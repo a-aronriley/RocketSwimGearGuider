@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RocketSwim Gear Guider</title>
+  <meta name="description" content="Equipment requirements guide for RocketSwim competitive swim club parents. Find out exactly what gear your swimmer needs.">
+  <link rel="icon" href="https://rocketswim.com/wp-content/uploads/cropped-cropped-Logo_color-1-32x32.jpg" sizes="32x32">
+  <link rel="apple-touch-icon" href="https://rocketswim.com/wp-content/uploads/cropped-cropped-Logo_color-1-180x180.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: { 50: '#e8eaf0', 100: '#c5c9d9', 200: '#9ea5bf', 300: '#7781a5', 400: '#596691', 500: '#3b4b7e', 600: '#354476', 700: '#2d3b6b', 800: '#263261', 900: '#0A1628' },
+            teal: { 50: '#e0f7fa', 100: '#b2ebf2', 200: '#80deea', 300: '#4dd0e1', 400: '#26c6da', 500: '#00BCD4', 600: '#00acc1', 700: '#0097a7', 800: '#00838f', 900: '#006064' },
+            gold: { 50: '#fff8e1', 100: '#ffecb3', 200: '#ffe082', 300: '#ffd54f', 400: '#ffca28', 500: '#FFC107', 600: '#ffb300', 700: '#ffa000', 800: '#ff8f00', 900: '#ff6f00' }
+          },
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <style>
+    .badge-required { background: #00BCD4; color: white; }
+    .badge-optional { background: #FFC107; color: #0A1628; }
+    .badge-new { background: #4CAF50; color: white; }
+    .badge-have { background: #E8EAF0; color: #3b4b7e; }
+    .source-club { border-left: 4px solid #00BCD4; }
+    .source-coach { border-left: 4px solid #FFC107; }
+    .source-store { border-left: 4px solid #4CAF50; }
+    .source-amazon { border-left: 4px solid #FF9800; }
+    .source-any { border-left: 4px solid #9E9E9E; }
+    .gear-card { transition: all 0.2s ease; }
+    .gear-card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(10, 22, 40, 0.12); }
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @media print {
+      .no-print { display: none !important; }
+      .print-only { display: block !important; }
+    }
+    .toast { animation: slideUp 0.3s ease, fadeOut 0.3s ease 2.7s; }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+  </style>
+</head>
+<body class="bg-gray-50 font-sans text-navy-900 min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-navy-900 text-white shadow-lg">
+    <div class="max-w-5xl mx-auto px-4 py-4 flex items-center gap-4">
+      <img src="https://rocketswim.com/wp-content/uploads/cropped-Logo_colorr-1.jpg" alt="RocketSwim Logo" class="h-14 w-14 rounded-full object-cover border-2 border-teal-500">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight">RocketSwim <span class="text-teal-400">Gear Guider</span></h1>
+        <p class="text-sm text-gray-300">Know exactly what equipment your swimmer needs</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-5xl mx-auto px-4 py-8">
+
+    <!-- Level Selector -->
+    <section id="level-selector" class="bg-white rounded-xl shadow-md p-6 mb-8 no-print">
+      <h2 class="text-lg font-bold text-navy-900 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+        Select Swimmer's Level
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label for="level-from" class="block text-sm font-semibold text-navy-700 mb-2">Coming from:</label>
+          <select id="level-from" class="w-full rounded-lg border-2 border-gray-200 px-4 py-3 text-base focus:border-teal-500 focus:ring-2 focus:ring-teal-200 transition-colors cursor-pointer bg-white">
+            <option value="">New to RocketSwim / No prior gear</option>
+          </select>
+          <p class="text-xs text-gray-500 mt-1">Select if upgrading from another level or joining from another club</p>
+        </div>
+        <div>
+          <label for="level-to" class="block text-sm font-semibold text-navy-700 mb-2">Moving to:</label>
+          <select id="level-to" class="w-full rounded-lg border-2 border-gray-200 px-4 py-3 text-base focus:border-teal-500 focus:ring-2 focus:ring-teal-200 transition-colors cursor-pointer bg-white">
+            <option value="">Select target level…</option>
+          </select>
+          <p class="text-xs text-gray-500 mt-1">The level your swimmer is entering</p>
+        </div>
+      </div>
+      <!-- Level info bar -->
+      <div id="level-info" class="hidden mt-4 p-3 bg-teal-50 rounded-lg border border-teal-100">
+        <p id="level-info-text" class="text-sm text-teal-800"></p>
+      </div>
+    </section>
+
+    <!-- Gear Checklist Section (shown when from level is set) -->
+    <section id="checklist-section" class="hidden mb-8">
+      <div class="bg-white rounded-xl shadow-md p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-navy-900 flex items-center gap-2">
+            <svg class="w-5 h-5 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+            <span id="checklist-title">Your Gear Checklist</span>
+          </h2>
+          <span id="checklist-count" class="text-sm text-gray-500"></span>
+        </div>
+        <p class="text-sm text-gray-600 mb-4" id="checklist-instructions"></p>
+        <div id="checklist-items" class="space-y-2"></div>
+      </div>
+    </section>
+
+    <!-- Shopping List Section -->
+    <section id="shopping-section" class="hidden mb-8 fade-in">
+      <div class="bg-white rounded-xl shadow-md p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-navy-900 flex items-center gap-2">
+            <svg class="w-5 h-5 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
+            <span id="shopping-title">Your Gear Shopping List</span>
+          </h2>
+          <div class="flex gap-2 no-print">
+            <button onclick="window.print()" class="text-sm px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-navy-700 transition-colors flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+              Print
+            </button>
+          </div>
+        </div>
+
+        <!-- Required Gear -->
+        <div id="shopping-required" class="mb-6"></div>
+
+        <!-- Optional Gear -->
+        <div id="shopping-optional" class="mb-6"></div>
+
+        <!-- All Set Message -->
+        <div id="all-set" class="hidden text-center py-8">
+          <div class="text-5xl mb-3">🎉</div>
+          <h3 class="text-xl font-bold text-navy-900 mb-2">You're all set!</h3>
+          <p class="text-gray-600">Your swimmer has all the gear needed for this level.</p>
+        </div>
+
+        <!-- Cart Summary -->
+        <div id="cart-summary" class="hidden mt-6 border-t pt-6">
+          <h3 class="font-bold text-navy-900 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-gold-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Payment Summary
+          </h3>
+          <div id="cart-details" class="space-y-4"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stores Info -->
+    <section id="stores-section" class="hidden mb-8 no-print">
+      <div class="bg-white rounded-xl shadow-md p-6">
+        <h2 class="text-lg font-bold text-navy-900 mb-4 flex items-center gap-2">
+          <svg class="w-5 h-5 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+          Where to Buy
+        </h2>
+        <div id="stores-list" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-navy-900 text-gray-400 text-center py-6 mt-12">
+    <p class="text-sm">RocketSwim Gear Guider &middot; <a href="https://rocketswim.com" target="_blank" class="text-teal-400 hover:text-teal-300 transition-colors">rocketswim.com</a></p>
+    <p class="text-xs mt-1 text-gray-500">Passion + Process = Performance 🚀</p>
+  </footer>
+
+  <!-- Toast notification container -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
