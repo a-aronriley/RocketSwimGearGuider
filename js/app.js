@@ -290,6 +290,7 @@
     const sourceClass = `source-${gear.source}`;
     const buyButton = getBuyButton(gear);
     const categoryIcon = gear.category === 'WATER' ? '🏊' : '🏋️';
+    const isSplashables = (gear.storeName || '').toLowerCase().includes('splashable');
 
     return `
       <div class="gear-card ${sourceClass} rounded-lg border border-gray-200 p-4 bg-white flex items-center justify-between gap-4">
@@ -298,6 +299,7 @@
             <span class="text-xs">${categoryIcon}</span>
             <span class="font-medium text-sm text-navy-900">${gear.name}</span>
             ${priceText ? `<span class="text-sm font-semibold text-teal-700">${priceText}</span>` : ''}
+            ${isSplashables ? '<span class="text-xs bg-teal-100 text-teal-700 px-1.5 py-0.5 rounded font-medium">20% club discount</span>' : ''}
           </div>
           ${gear.notes ? `<p class="text-xs text-gray-500 mt-1">${gear.notes}</p>` : ''}
         </div>
@@ -309,35 +311,52 @@
     `;
   }
 
-  // ── Cart & Payment Summary ─────────────────────────────────
+  // ── Cart & Payment Summary (Issues #10-13) ────────────────
   function renderCartSummary(needed) {
-    const clubItems = needed.filter(g => g.source === 'club' && g.priceFromClub);
-    const coachItems = needed.filter(g => g.source === 'coach');
-    const storeItems = needed.filter(g => ['store', 'amazon'].includes(g.source) && g.purchaseUrl);
+    // Group by source (Issue #10)
+    // "Payment items" = club or coach items that have a price → pay via e-transfer email
+    const paymentItems = needed.filter(g =>
+      (g.source === 'club' || g.source === 'coach') && g.priceFromClub
+    );
+    // "Coach items" = coach-sourced items WITHOUT a price → ask via Discord
+    const coachItems = needed.filter(g => g.source === 'coach' && !g.priceFromClub);
+    // "Store items" = store/amazon/swimoutlet with buy links
+    const storeItems = needed.filter(g =>
+      ['store', 'amazon'].includes(g.source) && g.purchaseUrl
+    );
+    // "Generic items" = available anywhere
     const anyItems = needed.filter(g => g.source === 'any');
 
-    if (clubItems.length === 0 && coachItems.length === 0 && storeItems.length === 0 && anyItems.length === 0) {
+    const hasAnything = paymentItems.length > 0 || coachItems.length > 0 ||
+                        storeItems.length > 0 || anyItems.length > 0;
+
+    if (!hasAnything) {
       $cartSummary.classList.add('hidden');
       return;
     }
 
+    const toId = $toSelect.value;
+    const toLevel = gearData.levels.find(l => l.id === toId);
     let html = '';
 
-    // Club items — payment via email
-    if (clubItems.length > 0) {
-      const total = clubItems.reduce((sum, g) => sum + (g.priceFromClub || 0), 0);
-      const itemList = clubItems.map(g => `${g.name} ($${g.priceFromClub})`).join(', ');
-      const subject = encodeURIComponent('RocketSwim Gear Order');
-      const body = encodeURIComponent(`Hi,\n\nI'd like to order the following gear:\n\n${clubItems.map(g => `• ${g.name} — $${g.priceFromClub}`).join('\n')}\n\nTotal: $${total}\n\nSwimmer Name: [Your swimmer's name]\nLevel: ${$toSelect.value}\n\nThank you!`);
+    // ── Club/Coach priced items — payment via email (Issue #11) ──
+    if (paymentItems.length > 0) {
+      const total = paymentItems.reduce((sum, g) => sum + (g.priceFromClub || 0), 0);
+      const subject = encodeURIComponent(`RocketSwim Gear Payment — ${toLevel ? toLevel.name : toId}`);
+      const body = encodeURIComponent(
+        `Hi,\n\nI'd like to order the following gear:\n\n` +
+        paymentItems.map(g => `• ${g.name} — $${g.priceFromClub}`).join('\n') +
+        `\n\nTotal: $${total}\n\nSwimmer Name: [Your swimmer's name]\nLevel: ${toId}\n\nThank you!`
+      );
 
       html += `
         <div class="bg-teal-50 rounded-lg p-4 border border-teal-100">
           <h4 class="font-semibold text-teal-800 text-sm mb-2 flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-            Club Gear — Pay via Email
+            Club Gear — Pay via E-Transfer
           </h4>
           <ul class="text-sm text-teal-900 mb-3 space-y-1">
-            ${clubItems.map(g => `<li class="flex justify-between"><span>${g.name}</span><span class="font-medium">$${g.priceFromClub}</span></li>`).join('')}
+            ${paymentItems.map(g => `<li class="flex justify-between"><span>${g.name}</span><span class="font-medium">$${g.priceFromClub}</span></li>`).join('')}
           </ul>
           <div class="flex items-center justify-between border-t border-teal-200 pt-2 mb-3">
             <span class="font-bold text-teal-900">Total</span>
@@ -346,16 +365,16 @@
           <a href="mailto:${gearData.payment.clubEmail}?subject=${subject}&body=${body}"
             class="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors no-print">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-            Email Payment Request
+            📧 Email Payment Request
           </a>
           <p class="text-xs text-teal-600 mt-2">Sends to ${gearData.payment.clubEmail}</p>
         </div>
       `;
     }
 
-    // Coach items — Discord DM
+    // ── Coach items without price — Discord DM (Issue #12) ──
     if (coachItems.length > 0) {
-      const discordMsg = `Hi Coach! 👋\n\nMy swimmer is moving to ${$toSelect.value} and needs the following gear:\n\n${coachItems.map(g => `• ${g.name}`).join('\n')}\n\nCan you let me know how to get these? Thanks! 🚀`;
+      const discordMsg = `Hi! My swimmer is moving to ${toLevel ? toLevel.name : toId}. Could I get:\n\n${coachItems.map(g => `• ${g.name}`).join('\n')}\n\nThanks! 🚀`;
 
       html += `
         <div class="bg-amber-50 rounded-lg p-4 border border-amber-100 mt-4">
@@ -369,14 +388,14 @@
           <button onclick="copyToClipboard(\`${discordMsg.replace(/`/g, '\\`')}\`)"
             class="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors no-print">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
-            Copy Discord Message
+            📋 Copy Discord Message
           </button>
           <p class="text-xs text-amber-600 mt-2">${gearData.payment.coachContact}</p>
         </div>
       `;
     }
 
-    // Store items
+    // ── Store/External items — buy links with store badges (Issue #13) ──
     if (storeItems.length > 0) {
       html += `
         <div class="bg-green-50 rounded-lg p-4 border border-green-100 mt-4">
@@ -384,22 +403,29 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
             Buy from Stores
           </h4>
-          <ul class="text-sm text-green-900 space-y-2">
-            ${storeItems.map(g => `
-              <li class="flex items-center justify-between">
-                <span>${g.name}</span>
+          <ul class="text-sm text-green-900 space-y-3">
+            ${storeItems.map(g => {
+              const storeName = g.storeName || (g.source === 'amazon' ? 'Amazon' : 'Store');
+              const isSplashables = storeName.toLowerCase().includes('splashable');
+              return `
+              <li class="flex items-center justify-between gap-2">
+                <div>
+                  <span class="font-medium">${g.name}</span>
+                  ${isSplashables ? '<span class="ml-1 text-xs bg-teal-100 text-teal-700 px-1.5 py-0.5 rounded font-medium">20% club discount</span>' : ''}
+                </div>
                 <a href="${g.purchaseUrl}" target="_blank" rel="noopener"
-                  class="inline-flex items-center gap-1 text-green-700 hover:text-green-900 font-medium text-xs">
-                  ${g.storeName || 'Buy'} →
+                  class="inline-flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap no-print">
+                  Buy at ${storeName}
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                 </a>
-              </li>
-            `).join('')}
+              </li>`;
+            }).join('')}
           </ul>
         </div>
       `;
     }
 
-    // Items available anywhere
+    // ── Generic items — available anywhere ──
     if (anyItems.length > 0) {
       html += `
         <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 mt-4">
@@ -445,12 +471,15 @@
 
   function getBuyButton(gear) {
     if (gear.purchaseUrl) {
+      const storeName = gear.storeName || (gear.source === 'amazon' ? 'Amazon' : 'Store');
+      const isSplashables = storeName.toLowerCase().includes('splashable');
       return `<a href="${gear.purchaseUrl}" target="_blank" rel="noopener"
-        class="inline-flex items-center gap-1 bg-navy-900 hover:bg-navy-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors no-print">
-        Buy <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+        class="inline-flex items-center gap-1 bg-navy-900 hover:bg-navy-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors no-print whitespace-nowrap"
+        title="${isSplashables ? '20% club discount at Splashables' : 'Buy at ' + storeName}">
+        Buy at ${storeName} <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
       </a>`;
     }
-    if (gear.source === 'club' && gear.priceFromClub) {
+    if ((gear.source === 'club' || gear.source === 'coach') && gear.priceFromClub) {
       return `<span class="text-sm font-semibold text-teal-700">$${gear.priceFromClub}</span>`;
     }
     return '';
