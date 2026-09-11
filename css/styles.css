@@ -183,6 +183,121 @@ input[type="checkbox"] {
   #toast-container { display: none !important; }
 }
 
+/* ── Wizard Step Indicator (Issue #35) ────────────────── */
+#wizard-nav ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.wizard-step {
+  display: flex;
+  align-items: center;
+}
+
+.wizard-step-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 12px;
+}
+
+.wizard-step-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.wizard-step-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 14px;
+  background: #e8eaf0;
+  color: #7781a5;
+  transition: all 0.2s ease;
+}
+
+.wizard-step-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #7781a5;
+  transition: color 0.2s ease;
+}
+
+/* Active step */
+.wizard-step-btn.active .wizard-step-number {
+  background: #00BCD4;
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 188, 212, 0.35);
+}
+.wizard-step-btn.active .wizard-step-label {
+  color: #0A1628;
+}
+
+/* Completed step */
+.wizard-step-btn.completed .wizard-step-number {
+  background: #0A1628;
+  color: white;
+}
+.wizard-step-btn.completed .wizard-step-label {
+  color: #3b4b7e;
+}
+.wizard-step-btn.completed:hover {
+  background: #e0f7fa;
+}
+
+/* Connector line */
+.wizard-connector {
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+}
+.wizard-connector-line {
+  width: 40px;
+  height: 2px;
+  background: #e8eaf0;
+  border-radius: 1px;
+}
+
+/* Wizard panel transition */
+.wizard-panel {
+  transition: opacity 0.3s ease;
+}
+
+/* Wizard button responsive */
+@media (max-width: 640px) {
+  .wizard-step-btn {
+    padding: 6px 10px;
+  }
+  .wizard-step-number {
+    width: 30px;
+    height: 30px;
+    font-size: 13px;
+  }
+  .wizard-step-label {
+    font-size: 11px;
+  }
+  .wizard-connector-line {
+    width: 24px;
+  }
+  .wizard-next-btn,
+  .wizard-back-btn {
+    padding-left: 16px;
+    padding-right: 16px;
+    font-size: 14px;
+  }
+}
+
 /* ── Toast notification ──────────────────────────────── */
 .toast { animation: slideUp 0.3s ease, fadeOut 0.3s ease 2.7s; }
 @keyframes slideUp {
