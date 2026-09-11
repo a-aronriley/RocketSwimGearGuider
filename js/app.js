@@ -1,6 +1,6 @@
 /**
  * RocketSwim Gear Guider
- * Main application logic
+ * Main application logic — 3-step wizard (Issue #35)
  */
 
 (function () {
@@ -9,20 +9,23 @@
   // ── State ──────────────────────────────────────────────────
   let gearData = null;
   let checkedItems = new Set(); // items the parent says they already own
+  let currentStep = 1;
+  let targetGear = [];          // gear for the selected target level
 
   // ── DOM refs ───────────────────────────────────────────────
   const $loadingState = document.getElementById('loading-state');
-  const $levelSelector = document.getElementById('level-selector');
+  const $wizardNav = document.getElementById('wizard-nav');
+  const $step1 = document.getElementById('step-1');
+  const $step2 = document.getElementById('step-2');
+  const $step3 = document.getElementById('step-3');
   const $fromSelect = document.getElementById('level-from');
   const $toSelect = document.getElementById('level-to');
   const $levelInfo = document.getElementById('level-info');
   const $levelInfoText = document.getElementById('level-info-text');
-  const $checklistSection = document.getElementById('checklist-section');
   const $checklistTitle = document.getElementById('checklist-title');
   const $checklistCount = document.getElementById('checklist-count');
   const $checklistInstructions = document.getElementById('checklist-instructions');
   const $checklistItems = document.getElementById('checklist-items');
-  const $shoppingSection = document.getElementById('shopping-section');
   const $shoppingTitle = document.getElementById('shopping-title');
   const $shoppingRequired = document.getElementById('shopping-required');
   const $shoppingOptional = document.getElementById('shopping-optional');
@@ -31,6 +34,13 @@
   const $cartDetails = document.getElementById('cart-details');
   const $storesSection = document.getElementById('stores-section');
   const $storesList = document.getElementById('stores-list');
+
+  // Wizard buttons
+  const $btnToStep2 = document.getElementById('btn-to-step2');
+  const $btnBackToStep1 = document.getElementById('btn-back-to-step1');
+  const $btnToStep3 = document.getElementById('btn-to-step3');
+  const $btnBackToStep2 = document.getElementById('btn-back-to-step2');
+  const $btnStartOver = document.getElementById('btn-start-over');
 
   // ── Bootstrap ──────────────────────────────────────────────
   async function init() {
@@ -46,14 +56,15 @@
         gearData = await resp.json();
       }
 
-      // Hide loading skeleton, show level selector (Issue #20)
+      // Hide loading skeleton, show wizard
       if ($loadingState) $loadingState.classList.add('hidden');
-      if ($levelSelector) $levelSelector.classList.remove('hidden');
+      if ($wizardNav) $wizardNav.classList.remove('hidden');
 
       populateDropdowns();
       renderStores();
-      $fromSelect.addEventListener('change', onSelectionChange);
-      $toSelect.addEventListener('change', onSelectionChange);
+      bindWizardEvents();
+      goToStep(1);
+
     } catch (err) {
       console.error('Gear data load error:', err);
       // Replace loading state with error message (Issue #20)
@@ -74,6 +85,129 @@
     }
   }
 
+  // ── Wizard Navigation (Issue #35) ──────────────────────────
+  function bindWizardEvents() {
+    // Dropdowns → update level info + enable/disable Continue
+    $fromSelect.addEventListener('change', onSetupChange);
+    $toSelect.addEventListener('change', onSetupChange);
+
+    // Wizard buttons
+    $btnToStep2.addEventListener('click', () => {
+      prepareChecklist();
+      goToStep(2);
+    });
+    $btnBackToStep1.addEventListener('click', () => goToStep(1));
+    $btnToStep3.addEventListener('click', () => {
+      renderShoppingList();
+      goToStep(3);
+    });
+    $btnBackToStep2.addEventListener('click', () => goToStep(2));
+    $btnStartOver.addEventListener('click', startOver);
+
+    // Step indicator clicks (only completed steps)
+    for (let i = 1; i <= 3; i++) {
+      const btn = document.getElementById('wizard-btn-' + i);
+      if (btn) {
+        btn.addEventListener('click', () => {
+          if (!btn.disabled) {
+            if (i === 2) prepareChecklist();
+            if (i === 3) renderShoppingList();
+            goToStep(i);
+          }
+        });
+      }
+    }
+  }
+
+  function goToStep(step) {
+    currentStep = step;
+
+    // Hide all panels
+    [$step1, $step2, $step3].forEach(el => {
+      el.classList.add('hidden');
+      el.classList.remove('fade-in');
+    });
+
+    // Show target panel
+    const panel = [null, $step1, $step2, $step3][step];
+    panel.classList.remove('hidden');
+    panel.classList.add('fade-in');
+
+    // Update step indicators
+    updateStepIndicators();
+
+    // Scroll to top of main content
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function updateStepIndicators() {
+    for (let i = 1; i <= 3; i++) {
+      const btn = document.getElementById('wizard-btn-' + i);
+      if (!btn) continue;
+
+      btn.classList.remove('active', 'completed');
+      btn.removeAttribute('aria-current');
+
+      if (i === currentStep) {
+        btn.classList.add('active');
+        btn.setAttribute('aria-current', 'step');
+        btn.disabled = false;
+      } else if (i < currentStep) {
+        btn.classList.add('completed');
+        btn.disabled = false;
+      } else {
+        // Future steps: enable if they've been reached before
+        // Step 2 accessible once target level chosen
+        // Step 3 accessible once checklist viewed
+        if (i === 2 && $toSelect.value) {
+          btn.disabled = false;
+        } else if (i === 3 && currentStep > 2) {
+          btn.disabled = false;
+        } else {
+          btn.disabled = true;
+        }
+      }
+    }
+  }
+
+  function startOver() {
+    $fromSelect.value = '';
+    $toSelect.value = '';
+    checkedItems.clear();
+    targetGear = [];
+    $levelInfo.classList.add('hidden');
+    $btnToStep2.disabled = true;
+    goToStep(1);
+    // Reset step 3 button to disabled
+    const btn3 = document.getElementById('wizard-btn-3');
+    if (btn3) btn3.disabled = true;
+  }
+
+  // ── Step 1: Setup Change Handler ───────────────────────────
+  function onSetupChange() {
+    const toId = $toSelect.value;
+
+    if (!toId) {
+      $levelInfo.classList.add('hidden');
+      $btnToStep2.disabled = true;
+      return;
+    }
+
+    const fromId = $fromSelect.value;
+    const toLevel = gearData.levels.find(l => l.id === toId);
+    const fromLevel = fromId ? gearData.levels.find(l => l.id === fromId) : null;
+
+    // Show level info
+    showLevelInfo(toLevel, fromLevel);
+
+    // Enable Continue
+    $btnToStep2.disabled = false;
+
+    // Enable step 2 in nav
+    const btn2 = document.getElementById('wizard-btn-2');
+    if (btn2) btn2.disabled = false;
+  }
+
   // ── Populate Level Dropdowns ───────────────────────────────
   function populateDropdowns() {
     gearData.levels.forEach(level => {
@@ -89,46 +223,6 @@
       optTo.textContent = `${level.name} (${level.id}) — Ages ${level.ageRange}`;
       $toSelect.appendChild(optTo);
     });
-  }
-
-  // ── Selection Change Handler ───────────────────────────────
-  function onSelectionChange() {
-    const fromId = $fromSelect.value;
-    const toId = $toSelect.value;
-
-    // Reset state
-    checkedItems.clear();
-
-    if (!toId) {
-      hideAll();
-      return;
-    }
-
-    const toLevel = gearData.levels.find(l => l.id === toId);
-    const fromLevel = fromId ? gearData.levels.find(l => l.id === fromId) : null;
-
-    // Show level info
-    showLevelInfo(toLevel, fromLevel);
-
-    // Get gear for target level
-    const targetGear = getGearForLevel(toId);
-
-    if (fromId) {
-      // Upgrade flow: pre-check gear from previous level (Issue #6)
-      const fromGear = getGearForLevel(fromId);
-      fromGear.forEach(g => {
-        if (targetGear.some(tg => tg.id === g.id)) {
-          checkedItems.add(g.id);
-        }
-      });
-      showChecklist(targetGear, fromId, toId);
-    } else {
-      // "None/New to club" flow (Issue #9): show checklist with nothing pre-checked
-      showChecklist(targetGear, null, toId);
-    }
-
-    renderShoppingList(targetGear, toId);
-    $storesSection.classList.remove('hidden');
   }
 
   // ── Get Gear for a Level ───────────────────────────────────
@@ -151,19 +245,47 @@
     $levelInfo.classList.remove('hidden');
   }
 
-  // ── Checklist (Issues #6, #8, #9) ─────────────────────────
-  function showChecklist(targetGear, fromId, toId) {
+  // ── Step 2: Prepare Checklist ──────────────────────────────
+  function prepareChecklist() {
+    const fromId = $fromSelect.value;
+    const toId = $toSelect.value;
+
+    if (!toId) return;
+
+    // Reset checked items when re-entering step 2 from step 1
+    // (only if dropdown values changed since last checklist build)
+    checkedItems.clear();
+
+    targetGear = getGearForLevel(toId);
     const isNewSwimmer = !fromId;
     const fromGear = isNewSwimmer ? [] : getGearForLevel(fromId);
     const fromIds = new Set(fromGear.map(g => g.id));
 
-    // Determine which level each item first appears at (for "NEW at [level]" badge)
+    // Pre-check owned items for upgrade flow
+    if (!isNewSwimmer) {
+      fromGear.forEach(g => {
+        if (targetGear.some(tg => tg.id === g.id)) {
+          checkedItems.add(g.id);
+        }
+      });
+    }
+
+    showChecklist(targetGear, fromId, toId);
+  }
+
+  // ── Checklist (Issues #6, #8, #9) ─────────────────────────
+  function showChecklist(gear, fromId, toId) {
+    const isNewSwimmer = !fromId;
+    const fromGear = isNewSwimmer ? [] : getGearForLevel(fromId);
+    const fromIds = new Set(fromGear.map(g => g.id));
+
+    // Determine level order
     const levelOrder = gearData.levels.map(l => l.id);
 
     $checklistTitle.textContent = 'Gear Checklist — What do you already have?';
 
     if (isNewSwimmer) {
-      $checklistInstructions.innerHTML = 'You\'re new to RocketSwim! <strong>Check off</strong> any gear you already own — unchecked items will appear in your shopping list below.';
+      $checklistInstructions.innerHTML = 'You\'re new to RocketSwim! <strong>Check off</strong> any gear you already own — unchecked items will appear in your shopping list.';
     } else {
       const fromLevel = gearData.levels.find(l => l.id === fromId);
       $checklistInstructions.innerHTML = `Items from <strong>${fromLevel.name} (${fromId})</strong> are pre-checked. <strong>Uncheck</strong> anything you don't actually have — those items will appear in your shopping list.`;
@@ -172,7 +294,7 @@
     $checklistItems.innerHTML = '';
 
     // Group by category
-    const categories = groupByCategory(targetGear);
+    const categories = groupByCategory(gear);
 
     for (const [cat, items] of Object.entries(categories)) {
       const catHeader = document.createElement('div');
@@ -182,25 +304,11 @@
       </h3>`;
       $checklistItems.appendChild(catHeader);
 
-      items.forEach(gear => {
-        const isOwned = fromIds.has(gear.id);
-        const isRequired = gear.levels[toId] === 'R';
-        const isOptional = gear.levels[toId] === 'O';
-
-        // Determine if item is NEW at target level (Issue #8)
-        // "NEW" = not available at the from-level (or new swimmer)
+      items.forEach(gearItem => {
+        const isOwned = fromIds.has(gearItem.id);
+        const isRequired = gearItem.levels[toId] === 'R';
+        const isOptional = gearItem.levels[toId] === 'O';
         const isNew = !isNewSwimmer && !isOwned;
-
-        // Find the first level where this item appears (for "NEW at [level]" text)
-        let firstAppearLevel = '';
-        if (isNew && !isNewSwimmer) {
-          for (const lvId of levelOrder) {
-            if (gear.levels[lvId] === 'R' || gear.levels[lvId] === 'O') {
-              firstAppearLevel = lvId;
-              break;
-            }
-          }
-        }
 
         // Build badge HTML (Issue #8)
         let badgeHtml = '';
@@ -214,67 +322,60 @@
         }
 
         const div = document.createElement('label');
-        div.className = `gear-card flex items-center gap-3 p-3 rounded-lg border cursor-pointer ${isOwned ? 'bg-gray-50 border-gray-200' : 'bg-green-50 border-green-200'}`;
+        div.className = `gear-card flex items-center gap-3 p-3 rounded-lg border cursor-pointer ${checkedItems.has(gearItem.id) ? 'bg-gray-50 border-gray-200' : 'bg-green-50 border-green-200'}`;
         div.innerHTML = `
           <input type="checkbox" class="w-5 h-5 rounded border-gray-300 text-teal-500 focus:ring-teal-400 cursor-pointer"
-            data-gear-id="${gear.id}" ${isOwned ? 'checked' : ''}
-            aria-label="${gear.name} — ${isRequired ? 'required' : 'optional'}${isOwned ? ', you have this' : ', needed'}">
+            data-gear-id="${gearItem.id}" ${checkedItems.has(gearItem.id) ? 'checked' : ''}
+            aria-label="${gearItem.name} — ${isRequired ? 'required' : 'optional'}${checkedItems.has(gearItem.id) ? ', you have this' : ', needed'}">
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="font-medium text-sm">${gear.name}</span>
+              <span class="font-medium text-sm">${gearItem.name}</span>
               ${badgeHtml}
             </div>
-            ${gear.notes ? '<p class="text-xs text-gray-500 mt-0.5">' + gear.notes + '</p>' : ''}
+            ${gearItem.notes ? '<p class="text-xs text-gray-500 mt-0.5">' + gearItem.notes + '</p>' : ''}
           </div>
-          ${getSourceBadge(gear)}
+          ${getSourceBadge(gearItem)}
         `;
 
         const checkbox = div.querySelector('input[type="checkbox"]');
         checkbox.addEventListener('change', () => {
           if (checkbox.checked) {
-            checkedItems.add(gear.id);
+            checkedItems.add(gearItem.id);
             div.className = 'gear-card flex items-center gap-3 p-3 rounded-lg border cursor-pointer bg-gray-50 border-gray-200';
           } else {
-            checkedItems.delete(gear.id);
+            checkedItems.delete(gearItem.id);
             div.className = 'gear-card flex items-center gap-3 p-3 rounded-lg border cursor-pointer bg-green-50 border-green-200';
           }
-          renderShoppingList(targetGear, toId);
+          updateChecklistCount(gear);
         });
-
-        // Sync initial state
-        if (isOwned) {
-          checkedItems.add(gear.id);
-        }
 
         $checklistItems.appendChild(div);
       });
     }
 
-    updateChecklistCount(targetGear);
-    $checklistSection.classList.remove('hidden');
+    updateChecklistCount(gear);
   }
 
-  function updateChecklistCount(targetGear) {
-    const total = targetGear.length;
+  function updateChecklistCount(gear) {
+    const total = gear.length;
     const owned = checkedItems.size;
     $checklistCount.textContent = `${owned}/${total} items owned`;
   }
 
-  // ── Shopping List ──────────────────────────────────────────
-  function renderShoppingList(targetGear, toId) {
+  // ── Step 3: Shopping List ──────────────────────────────────
+  function renderShoppingList() {
+    const toId = $toSelect.value;
+    if (!toId) return;
+
     const needed = targetGear.filter(g => !checkedItems.has(g.id));
     const required = needed.filter(g => g.levels[toId] === 'R');
     const optional = needed.filter(g => g.levels[toId] === 'O');
-
-    // Update checklist count
-    updateChecklistCount(targetGear);
 
     if (needed.length === 0) {
       $shoppingRequired.innerHTML = '';
       $shoppingOptional.innerHTML = '';
       $allSet.classList.remove('hidden');
       $cartSummary.classList.add('hidden');
-      $shoppingSection.classList.remove('hidden');
       $shoppingTitle.textContent = `Gear for ${toId}`;
       return;
     }
@@ -309,7 +410,6 @@
 
     // Render cart summary
     renderCartSummary(needed);
-    $shoppingSection.classList.remove('hidden');
   }
 
   function renderGearCard(gear) {
@@ -341,15 +441,12 @@
   // ── Cart & Payment Summary (Issues #10-13) ────────────────
   function renderCartSummary(needed) {
     // Group by source (Issue #10)
-    // "Club gear" = ALL club + coach items (merged into one section)
     const clubGear = needed.filter(g => g.source === 'club' || g.source === 'coach');
     const pricedClubGear = clubGear.filter(g => g.priceFromClub);
     const unpricedClubGear = clubGear.filter(g => !g.priceFromClub);
-    // "Store items" = store/amazon with buy links
     const storeItems = needed.filter(g =>
       ['store', 'amazon'].includes(g.source) && g.purchaseUrl
     );
-    // "Generic items" = available anywhere
     const anyItems = needed.filter(g => g.source === 'any');
 
     const hasAnything = clubGear.length > 0 || storeItems.length > 0 || anyItems.length > 0;
@@ -512,13 +609,6 @@
       groups[g.category].push(g);
     });
     return groups;
-  }
-
-  function hideAll() {
-    $levelInfo.classList.add('hidden');
-    $checklistSection.classList.add('hidden');
-    $shoppingSection.classList.add('hidden');
-    $storesSection.classList.add('hidden');
   }
 
   // ── Clipboard ──────────────────────────────────────────────
