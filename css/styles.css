@@ -1,0 +1,47 @@
+/* RocketSwim Gear Guider — Custom Styles
+   Tailwind CDN handles utility classes; this file covers
+   badges, source-indicator borders, animations and print. */
+
+/* ── Badges ──────────────────────────────────────────── */
+.badge-required { background: #00BCD4; color: white; }
+.badge-optional { background: #FFC107; color: #0A1628; }
+.badge-new      { background: #4CAF50; color: white; }
+.badge-have     { background: #E8EAF0; color: #3b4b7e; }
+
+/* ── Source left-border colours ──────────────────────── */
+.source-club    { border-left: 4px solid #00BCD4; }
+.source-coach   { border-left: 4px solid #FFC107; }
+.source-store   { border-left: 4px solid #4CAF50; }
+.source-amazon  { border-left: 4px solid #FF9800; }
+.source-any     { border-left: 4px solid #9E9E9E; }
+
+/* ── Card hover effect ───────────────────────────────── */
+.gear-card { transition: all 0.2s ease; }
+.gear-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(10, 22, 40, 0.12);
+}
+
+/* ── Fade-in animation ───────────────────────────────── */
+.fade-in { animation: fadeIn 0.3s ease-in; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Print helpers ───────────────────────────────────── */
+@media print {
+  .no-print  { display: none !important; }
+  .print-only { display: block !important; }
+}
+
+/* ── Toast notification ──────────────────────────────── */
+.toast { animation: slideUp 0.3s ease, fadeOut 0.3s ease 2.7s; }
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
