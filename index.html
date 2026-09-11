@@ -249,6 +249,32 @@
     <p class="text-xs mt-1 text-gray-500">Passion + Process = Performance 🚀</p>
   </footer>
 
+  <!-- Sticky Bottom Bar (Issue #42) — visible during Step 2 checklist -->
+  <div id="sticky-bar" class="hidden fixed bottom-0 left-0 right-0 bg-navy-900 text-white shadow-2xl z-40 no-print" role="status" aria-live="polite" aria-label="Shopping summary">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-4 flex-wrap text-sm">
+        <span id="sticky-items-needed" class="flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
+          <span class="font-semibold">0 items</span> to buy
+        </span>
+        <span class="hidden sm:inline text-navy-300">|</span>
+        <span id="sticky-club-total" class="hidden sm:flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Club <span class="font-semibold">$0</span>
+        </span>
+        <span class="hidden sm:inline text-navy-300">|</span>
+        <span id="sticky-store-count" class="hidden sm:flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+          <span class="font-semibold">0</span> store items
+        </span>
+      </div>
+      <button id="sticky-review-btn" class="bg-teal-500 hover:bg-teal-400 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0" aria-label="Review shopping list">
+        Review List
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+
   <!-- Toast notification container -->
   <div id="toast-container" class="fixed bottom-4 right-4 z-50" aria-live="assertive" aria-atomic="true"></div>
 
