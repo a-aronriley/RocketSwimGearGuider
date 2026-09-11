@@ -298,6 +298,46 @@ input[type="checkbox"] {
   }
 }
 
+/* ── Swimmer Tabs (Issue #39) ─────────────────────────── */
+.swimmer-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+  background: #e8eaf0;
+  color: #3b4b7e;
+}
+.swimmer-tab:hover {
+  background: #c5c9d9;
+}
+.swimmer-tab.active {
+  background: #00BCD4;
+  color: white;
+  border-color: #0097a7;
+}
+.swimmer-tab .remove-swimmer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  font-size: 12px;
+  line-height: 1;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+.swimmer-tab .remove-swimmer:hover {
+  opacity: 1;
+  background: rgba(0,0,0,0.15);
+}
+
 /* ── Sticky Bottom Bar (Issue #42) ────────────────────── */
 #sticky-bar {
   transition: transform 0.3s ease, opacity 0.3s ease;

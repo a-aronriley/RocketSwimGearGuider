@@ -8,9 +8,21 @@
 
   // ── State ──────────────────────────────────────────────────
   let gearData = null;
-  let checkedItems = new Set(); // items the parent says they already own
   let currentStep = 1;
-  let targetGear = [];          // gear for the selected target level
+
+  // Multi-swimmer support (Issue #39)
+  let swimmers = [];       // Array of { id, name, fromId, toId, checkedItems: Set, targetGear: [] }
+  let activeSwimmerId = 0; // Index of the currently selected swimmer
+
+  // Convenience accessors for the active swimmer
+  function activeSwimmer() { return swimmers[activeSwimmerId] || null; }
+  function getCheckedItems() { const s = activeSwimmer(); return s ? s.checkedItems : new Set(); }
+  function getTargetGear() { const s = activeSwimmer(); return s ? s.targetGear : []; }
+
+  // Legacy aliases for backward compatibility in unchanged functions
+  // These are computed properties that delegate to the active swimmer
+  let checkedItems = new Set();
+  let targetGear = [];
 
   // ── DOM refs ───────────────────────────────────────────────
   const $loadingState = document.getElementById('loading-state');
@@ -44,6 +56,12 @@
   const $btnStartOver = document.getElementById('btn-start-over');
 
   // Sticky bottom bar (Issue #42)
+  // Swimmer tabs (Issue #39)
+  const $swimmerTabs = document.getElementById('swimmer-tabs');
+  const $swimmerTabList = document.getElementById('swimmer-tab-list');
+  const $addSwimmerBtn = document.getElementById('add-swimmer-btn');
+  const $setupHeading = document.getElementById('setup-heading');
+
   const $stickyBar = document.getElementById('sticky-bar');
   const $stickyItemsNeeded = document.getElementById('sticky-items-needed');
   const $stickyClubTotal = document.getElementById('sticky-club-total');
@@ -71,6 +89,8 @@
       populateDropdowns();
       renderStores();
       bindWizardEvents();
+      bindSwimmerEvents();
+      addSwimmer('Swimmer 1');
       goToStep(1);
 
     } catch (err) {
@@ -195,10 +215,12 @@
   }
 
   function startOver() {
-    $fromSelect.value = '';
-    $toSelect.value = '';
-    checkedItems.clear();
+    // Reset all swimmers
+    swimmers = [];
+    activeSwimmerId = 0;
+    checkedItems = new Set();
     targetGear = [];
+    addSwimmer('Swimmer 1');
     $levelInfo.classList.add('hidden');
     $btnToStep2.disabled = true;
     goToStep(1);
@@ -207,13 +229,166 @@
     if (btn3) btn3.disabled = true;
   }
 
+  // ── Multi-Swimmer Management (Issue #39) ──────────────────
+  function bindSwimmerEvents() {
+    if ($addSwimmerBtn) {
+      $addSwimmerBtn.addEventListener('click', () => {
+        const name = 'Swimmer ' + (swimmers.length + 1);
+        addSwimmer(name);
+        switchToSwimmer(swimmers.length - 1);
+      });
+    }
+  }
+
+  function addSwimmer(name) {
+    const swimmer = {
+      id: swimmers.length,
+      name: name,
+      fromId: '',
+      toId: '',
+      checkedItems: new Set(),
+      targetGear: []
+    };
+    swimmers.push(swimmer);
+    renderSwimmerTabs();
+    switchToSwimmer(swimmer.id);
+  }
+
+  function removeSwimmer(index) {
+    if (swimmers.length <= 1) return; // Must have at least one swimmer
+    swimmers.splice(index, 1);
+    // Re-number swimmer IDs
+    swimmers.forEach((s, i) => { s.id = i; });
+    // If we removed the active swimmer, switch to previous or first
+    if (activeSwimmerId >= swimmers.length) {
+      activeSwimmerId = swimmers.length - 1;
+    }
+    renderSwimmerTabs();
+    switchToSwimmer(activeSwimmerId);
+  }
+
+  function switchToSwimmer(index) {
+    // Save current swimmer's state from UI
+    if (activeSwimmerId < swimmers.length && swimmers[activeSwimmerId]) {
+      const prev = swimmers[activeSwimmerId];
+      prev.fromId = $fromSelect.value;
+      prev.toId = $toSelect.value;
+    }
+
+    activeSwimmerId = index;
+    const swimmer = swimmers[index];
+
+    // Sync legacy variables
+    checkedItems = swimmer.checkedItems;
+    targetGear = swimmer.targetGear;
+
+    // Update UI with this swimmer's state
+    $fromSelect.value = swimmer.fromId;
+    $toSelect.value = swimmer.toId;
+
+    // Update heading
+    if ($setupHeading) {
+      $setupHeading.textContent = swimmers.length > 1
+        ? `Setup — ${swimmer.name}`
+        : 'Select Swimmer\'s Level';
+    }
+
+    // Update level info
+    if (swimmer.toId) {
+      const toLevel = gearData.levels.find(l => l.id === swimmer.toId);
+      const fromLevel = swimmer.fromId ? gearData.levels.find(l => l.id === swimmer.fromId) : null;
+      showLevelInfo(toLevel, fromLevel);
+      $btnToStep2.disabled = false;
+    } else {
+      $levelInfo.classList.add('hidden');
+      $btnToStep2.disabled = true;
+    }
+
+    // Update tab visual
+    renderSwimmerTabs();
+  }
+
+  function renderSwimmerTabs() {
+    if (!$swimmerTabList) return;
+    $swimmerTabList.innerHTML = '';
+
+    swimmers.forEach((swimmer, i) => {
+      const tab = document.createElement('button');
+      tab.className = `swimmer-tab ${i === activeSwimmerId ? 'active' : ''}`;
+      tab.setAttribute('role', 'tab');
+      tab.setAttribute('aria-selected', i === activeSwimmerId ? 'true' : 'false');
+      tab.setAttribute('aria-label', swimmer.name);
+
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = swimmer.name;
+      nameSpan.className = 'swimmer-name';
+      // Make name editable on double-click
+      nameSpan.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = swimmer.name;
+        input.className = 'text-xs font-semibold bg-transparent border-b border-current outline-none w-20';
+        input.style.color = 'inherit';
+        nameSpan.replaceWith(input);
+        input.focus();
+        input.select();
+        const finish = () => {
+          const val = input.value.trim() || swimmer.name;
+          swimmer.name = val;
+          renderSwimmerTabs();
+        };
+        input.addEventListener('blur', finish);
+        input.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') finish(); });
+      });
+      tab.appendChild(nameSpan);
+
+      // Level indicator
+      if (swimmer.toId) {
+        const levelBadge = document.createElement('span');
+        levelBadge.className = 'text-xs opacity-75';
+        levelBadge.textContent = `(${swimmer.toId})`;
+        tab.appendChild(levelBadge);
+      }
+
+      // Remove button (only if more than 1 swimmer)
+      if (swimmers.length > 1) {
+        const removeBtn = document.createElement('span');
+        removeBtn.className = 'remove-swimmer';
+        removeBtn.innerHTML = '×';
+        removeBtn.title = 'Remove ' + swimmer.name;
+        removeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          removeSwimmer(i);
+        });
+        tab.appendChild(removeBtn);
+      }
+
+      tab.addEventListener('click', () => {
+        if (i !== activeSwimmerId) {
+          switchToSwimmer(i);
+        }
+      });
+
+      $swimmerTabList.appendChild(tab);
+    });
+  }
+
   // ── Step 1: Setup Change Handler ───────────────────────────
   function onSetupChange() {
     const toId = $toSelect.value;
 
+    // Save to active swimmer
+    const swimmer = activeSwimmer();
+    if (swimmer) {
+      swimmer.fromId = $fromSelect.value;
+      swimmer.toId = toId;
+    }
+
     if (!toId) {
       $levelInfo.classList.add('hidden');
       $btnToStep2.disabled = true;
+      renderSwimmerTabs(); // Update tab badge
       return;
     }
 
@@ -230,6 +405,8 @@
     // Enable step 2 in nav
     const btn2 = document.getElementById('wizard-btn-2');
     if (btn2) btn2.disabled = false;
+
+    renderSwimmerTabs(); // Update tab badge
   }
 
   // ── Populate Level Dropdowns ───────────────────────────────
@@ -271,13 +448,37 @@
 
   // ── Step 2: Prepare Checklist ──────────────────────────────
   function prepareChecklist() {
+    // Sync from UI to active swimmer
+    const swimmer = activeSwimmer();
+    if (swimmer) {
+      swimmer.fromId = $fromSelect.value;
+      swimmer.toId = $toSelect.value;
+    }
+
+    // Prepare ALL swimmers' gear so sticky bar / review can aggregate (Issue #39)
+    swimmers.forEach(s => {
+      if (!s.toId) return;
+      // Only re-prepare if targetGear isn't set yet (avoid overwriting user checks)
+      if (s.targetGear.length === 0) {
+        s.targetGear = getGearForLevel(s.toId);
+        // Pre-check owned items for upgrade flow
+        if (s.fromId) {
+          const fromGear = getGearForLevel(s.fromId);
+          fromGear.forEach(g => {
+            if (s.targetGear.some(tg => tg.id === g.id)) {
+              s.checkedItems.add(g.id);
+            }
+          });
+        }
+      }
+    });
+
     const fromId = $fromSelect.value;
     const toId = $toSelect.value;
 
     if (!toId) return;
 
-    // Reset checked items when re-entering step 2 from step 1
-    // (only if dropdown values changed since last checklist build)
+    // Reset active swimmer's checked items when re-entering step 2 from step 1
     checkedItems.clear();
 
     targetGear = getGearForLevel(toId);
@@ -292,6 +493,12 @@
           checkedItems.add(g.id);
         }
       });
+    }
+
+    // Save to swimmer state
+    if (swimmer) {
+      swimmer.checkedItems = checkedItems;
+      swimmer.targetGear = targetGear;
     }
 
     showChecklist(targetGear, fromId, toId);
@@ -488,10 +695,21 @@
   function updateStickyBar() {
     if (!$stickyBar || currentStep !== 2) return;
 
-    const toId = $toSelect.value;
-    if (!toId) return;
+    // Aggregate needed items across all swimmers (Issue #39)
+    const allNeeded = [];
+    const seenIds = new Set();
+    swimmers.forEach(s => {
+      if (!s.toId) return;
+      const sGear = getGearForLevel(s.toId);
+      sGear.forEach(g => {
+        if (!s.checkedItems.has(g.id) && !seenIds.has(g.id)) {
+          allNeeded.push(g);
+          seenIds.add(g.id);
+        }
+      });
+    });
 
-    const needed = targetGear.filter(g => !checkedItems.has(g.id));
+    const needed = allNeeded;
     const clubGear = needed.filter(g => g.source === 'club' || g.source === 'coach');
     const clubTotal = clubGear.reduce((sum, g) => sum + (g.priceFromClub || 0), 0);
     const storeItems = needed.filter(g => ['store', 'amazon'].includes(g.source));
@@ -547,123 +765,185 @@
 
   // ── Step 3: Shopping List ──────────────────────────────────
   function renderShoppingList() {
-    const toId = $toSelect.value;
-    if (!toId) return;
+    // Save current swimmer state before rendering
+    const swimmer = activeSwimmer();
+    if (swimmer) {
+      swimmer.fromId = $fromSelect.value;
+      swimmer.toId = $toSelect.value;
+    }
 
-    const needed = targetGear.filter(g => !checkedItems.has(g.id));
-    const required = needed.filter(g => g.levels[toId] === 'R');
-    const optional = needed.filter(g => g.levels[toId] === 'O');
+    // Collect needed items across all swimmers (Issue #39)
+    const allNeeded = [];
+    const swimmerSections = [];
 
-    if (needed.length === 0) {
+    swimmers.forEach(s => {
+      if (!s.toId) return;
+      const sGear = getGearForLevel(s.toId);
+      const sNeeded = sGear.filter(g => !s.checkedItems.has(g.id));
+      const sRequired = sNeeded.filter(g => g.levels[s.toId] === 'R');
+      const sOptional = sNeeded.filter(g => g.levels[s.toId] === 'O');
+
+      // Deduplicate across swimmers for combined cart
+      sNeeded.forEach(g => {
+        if (!allNeeded.some(n => n.id === g.id)) allNeeded.push(g);
+      });
+
+      swimmerSections.push({ swimmer: s, needed: sNeeded, required: sRequired, optional: sOptional });
+    });
+
+    // If ALL swimmers have no needed items
+    if (allNeeded.length === 0) {
       $shoppingRequired.innerHTML = '';
       $shoppingOptional.innerHTML = '';
       $allSet.classList.remove('hidden');
       $cartSummary.classList.add('hidden');
-      $shoppingTitle.textContent = `Gear for ${toId}`;
-      // Still show retire section for upgrade flows (Issue #36)
+      $shoppingTitle.textContent = swimmers.length > 1
+        ? 'Family Gear Summary'
+        : `Gear for ${swimmers[0]?.toId || ''}`;
       renderRetireSection();
       return;
     }
 
     $allSet.classList.add('hidden');
-    const toLevel = gearData.levels.find(l => l.id === toId);
-    $shoppingTitle.textContent = `Shopping List for ${toLevel.name}`;
 
-    // Render required
-    if (required.length > 0) {
-      $shoppingRequired.innerHTML = `
-        <h3 class="text-sm font-bold text-navy-600 uppercase tracking-wider mb-3 flex items-center gap-2">
-          Required Gear <span class="text-xs font-normal text-gray-500">(${required.length} items)</span>
-        </h3>
-        <div class="space-y-2">${required.map(g => renderGearCard(g)).join('')}</div>
-      `;
-    } else {
-      $shoppingRequired.innerHTML = '';
-    }
+    // Single swimmer: original layout
+    if (swimmers.length === 1 || swimmerSections.length === 1) {
+      const s = swimmerSections[0];
+      const toLevel = gearData.levels.find(l => l.id === s.swimmer.toId);
+      $shoppingTitle.textContent = `Shopping List for ${toLevel.name}`;
 
-    // Render optional
-    if (optional.length > 0) {
-      $shoppingOptional.innerHTML = `
-        <h3 class="text-sm font-bold text-navy-600 uppercase tracking-wider mb-3 mt-6 flex items-center gap-2">
-          Optional Gear <span class="text-xs font-normal text-gray-500">(${optional.length} items)</span>
-        </h3>
-        <div class="space-y-2">${optional.map(g => renderGearCard(g)).join('')}</div>
-      `;
+      if (s.required.length > 0) {
+        $shoppingRequired.innerHTML = `
+          <h3 class="text-sm font-bold text-navy-600 uppercase tracking-wider mb-3 flex items-center gap-2">
+            Required Gear <span class="text-xs font-normal text-gray-500">(${s.required.length} items)</span>
+          </h3>
+          <div class="space-y-2">${s.required.map(g => renderGearCard(g)).join('')}</div>
+        `;
+      } else {
+        $shoppingRequired.innerHTML = '';
+      }
+
+      if (s.optional.length > 0) {
+        $shoppingOptional.innerHTML = `
+          <h3 class="text-sm font-bold text-navy-600 uppercase tracking-wider mb-3 mt-6 flex items-center gap-2">
+            Optional Gear <span class="text-xs font-normal text-gray-500">(${s.optional.length} items)</span>
+          </h3>
+          <div class="space-y-2">${s.optional.map(g => renderGearCard(g)).join('')}</div>
+        `;
+      } else {
+        $shoppingOptional.innerHTML = '';
+      }
     } else {
-      $shoppingOptional.innerHTML = '';
+      // Multi-swimmer: show per-swimmer sections (Issue #39)
+      $shoppingTitle.textContent = 'Family Shopping List';
+
+      let reqHtml = '';
+      let optHtml = '';
+
+      swimmerSections.forEach(sec => {
+        const toLevel = gearData.levels.find(l => l.id === sec.swimmer.toId);
+        const label = `${sec.swimmer.name} — ${toLevel ? toLevel.name : sec.swimmer.toId}`;
+
+        if (sec.required.length > 0) {
+          reqHtml += `
+            <h3 class="text-sm font-bold text-navy-600 uppercase tracking-wider mb-3 ${reqHtml ? 'mt-6' : ''} flex items-center gap-2">
+              👤 ${label} — Required <span class="text-xs font-normal text-gray-500">(${sec.required.length} items)</span>
+            </h3>
+            <div class="space-y-2">${sec.required.map(g => renderGearCard(g)).join('')}</div>
+          `;
+        }
+
+        if (sec.optional.length > 0) {
+          optHtml += `
+            <h3 class="text-sm font-bold text-navy-600 uppercase tracking-wider mb-3 ${optHtml ? 'mt-6' : 'mt-6'} flex items-center gap-2">
+              👤 ${label} — Optional <span class="text-xs font-normal text-gray-500">(${sec.optional.length} items)</span>
+            </h3>
+            <div class="space-y-2">${sec.optional.map(g => renderGearCard(g)).join('')}</div>
+          `;
+        }
+      });
+
+      $shoppingRequired.innerHTML = reqHtml;
+      $shoppingOptional.innerHTML = optHtml;
     }
 
     // Render retired items (Issue #36)
     renderRetireSection();
 
-    // Render cart summary
-    renderCartSummary(needed);
+    // Render cart summary with combined items
+    renderCartSummary(allNeeded);
   }
 
-  // ── Retire Section (Issue #36) ─────────────────────────
+  // ── Retire Section (Issue #36, updated for #39 multi-swimmer) ──
   function renderRetireSection() {
     if (!$retireSection) return;
 
-    const fromId = $fromSelect.value;
-    const toId = $toSelect.value;
+    // Collect retired items across all swimmers
+    let allRetiredSections = [];
 
-    // Only show for upgrade flows
-    if (!fromId || !toId) {
-      $retireSection.classList.add('hidden');
-      return;
-    }
+    swimmers.forEach(s => {
+      if (!s.fromId || !s.toId) return;
 
-    // Find items that were at the from level but NOT at the to level
-    const retiredItems = gearData.gear.filter(g => {
-      const fromReq = g.levels[fromId];
-      const toReq = g.levels[toId];
-      return (fromReq === 'R' || fromReq === 'O') && toReq !== 'R' && toReq !== 'O';
+      const retiredItems = gearData.gear.filter(g => {
+        const fromReq = g.levels[s.fromId];
+        const toReq = g.levels[s.toId];
+        return (fromReq === 'R' || fromReq === 'O') && toReq !== 'R' && toReq !== 'O';
+      });
+
+      if (retiredItems.length > 0) {
+        const fromLevel = gearData.levels.find(l => l.id === s.fromId);
+        const toLevel = gearData.levels.find(l => l.id === s.toId);
+        allRetiredSections.push({ swimmer: s, retiredItems, fromLevel, toLevel });
+      }
     });
 
-    if (retiredItems.length === 0) {
+    if (allRetiredSections.length === 0) {
       $retireSection.classList.add('hidden');
       return;
     }
 
-    const fromLevel = gearData.levels.find(l => l.id === fromId);
-    const toLevel = gearData.levels.find(l => l.id === toId);
+    let html = '<div class="border-t pt-6">';
 
-    let html = `
-      <div class="border-t pt-6">
+    allRetiredSections.forEach((sec, idx) => {
+      const swimmerLabel = swimmers.length > 1 ? `👤 ${sec.swimmer.name} — ` : '';
+      html += `
+        ${idx > 0 ? '<div class="mt-4"></div>' : ''}
         <h3 class="text-sm font-bold text-amber-700 uppercase tracking-wider mb-3 flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
-          No Longer Needed at ${toLevel.name}
-          <span class="text-xs font-normal text-gray-500">(${retiredItems.length} item${retiredItems.length !== 1 ? 's' : ''})</span>
+          ${swimmerLabel}No Longer Needed at ${sec.toLevel.name}
+          <span class="text-xs font-normal text-gray-500">(${sec.retiredItems.length} item${sec.retiredItems.length !== 1 ? 's' : ''})</span>
         </h3>
-        <p class="text-xs text-gray-500 mb-3">These items were used at ${fromLevel.name} but are not required at ${toLevel.name}. Consider passing them to a younger swimmer!</p>
+        <p class="text-xs text-gray-500 mb-3">These items were used at ${sec.fromLevel.name} but are not required at ${sec.toLevel.name}. Consider passing them to a younger swimmer!</p>
         <div class="space-y-2">
-    `;
-
-    retiredItems.forEach(item => {
-      // Check if this item has a replacement
-      const replacement = item.replacedBy ? gearData.gear.find(g => g.id === item.replacedBy) : null;
-      const replacementNote = replacement ? `<span class="text-xs text-teal-600">→ Replaced by ${replacement.name}</span>` : '';
-      const categoryIcon = item.category === 'WATER' ? '🏊' : '🏋️';
-
-      html += `
-        <div class="flex items-center gap-3 p-3 rounded-lg border border-amber-100 bg-amber-50">
-          <div class="flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 text-amber-600 shrink-0" aria-hidden="true">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4"/></svg>
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-xs">${categoryIcon}</span>
-              <span class="font-medium text-sm text-navy-900">${item.name}</span>
-              ${replacementNote}
-            </div>
-            ${item.model ? `<p class="text-xs text-gray-500 mt-0.5">${item.model}</p>` : ''}
-          </div>
-          <span class="text-xs px-2 py-1 rounded-full bg-amber-200 text-amber-800 font-medium shrink-0">Hand down 🤝</span>
-        </div>
       `;
+
+      sec.retiredItems.forEach(item => {
+        const replacement = item.replacedBy ? gearData.gear.find(g => g.id === item.replacedBy) : null;
+        const replacementNote = replacement ? `<span class="text-xs text-teal-600">→ Replaced by ${replacement.name}</span>` : '';
+        const categoryIcon = item.category === 'WATER' ? '🏊' : '🏋️';
+
+        html += `
+          <div class="flex items-center gap-3 p-3 rounded-lg border border-amber-100 bg-amber-50">
+            <div class="flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 text-amber-600 shrink-0" aria-hidden="true">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4"/></svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs">${categoryIcon}</span>
+                <span class="font-medium text-sm text-navy-900">${item.name}</span>
+                ${replacementNote}
+              </div>
+              ${item.model ? `<p class="text-xs text-gray-500 mt-0.5">${item.model}</p>` : ''}
+            </div>
+            <span class="text-xs px-2 py-1 rounded-full bg-amber-200 text-amber-800 font-medium shrink-0">Hand down 🤝</span>
+          </div>
+        `;
+      });
+
+      html += '</div>';
     });
 
-    html += '</div></div>';
+    html += '</div>';
     $retireSection.innerHTML = html;
     $retireSection.classList.remove('hidden');
   }
@@ -695,7 +975,7 @@
     `;
   }
 
-  // ── Cart & Payment Summary (Issues #10-13) ────────────────
+  // ── Cart & Payment Summary (Issues #10-13, updated for #39) ──
   function renderCartSummary(needed) {
     // Group by source (Issue #10)
     const clubGear = needed.filter(g => g.source === 'club' || g.source === 'coach');
@@ -713,21 +993,41 @@
       return;
     }
 
-    const toId = $toSelect.value;
-    const toLevel = gearData.levels.find(l => l.id === toId);
+    // Build multi-swimmer-aware labels for email/Discord (Issue #39)
+    const activeSwimmers = swimmers.filter(s => s.toId);
+    const isMulti = activeSwimmers.length > 1;
+    const levelSummary = isMulti
+      ? activeSwimmers.map(s => {
+          const lvl = gearData.levels.find(l => l.id === s.toId);
+          return `${s.name} → ${lvl ? lvl.name : s.toId}`;
+        }).join(', ')
+      : (() => {
+          const s = activeSwimmers[0];
+          const lvl = s ? gearData.levels.find(l => l.id === s.toId) : null;
+          return lvl ? lvl.name : (s ? s.toId : '');
+        })();
+    const swimmerNamePlaceholder = isMulti
+      ? activeSwimmers.map(s => s.name).join(', ')
+      : '[Your swimmer\'s name]';
+
     let html = '';
 
     // ── Club + Coach gear — merged single section ──
     if (clubGear.length > 0) {
       const total = pricedClubGear.reduce((sum, g) => sum + (g.priceFromClub || 0), 0);
-      const subject = encodeURIComponent(`RocketSwim Gear Payment — ${toLevel ? toLevel.name : toId}`);
+      const subject = encodeURIComponent(`RocketSwim Gear Payment — ${levelSummary}`);
       const body = encodeURIComponent(
         `Hi,\n\nI'd like to order the following gear:\n\n` +
         pricedClubGear.map(g => `• ${g.name} — $${g.priceFromClub}`).join('\n') +
         (unpricedClubGear.length > 0 ? `\n\nAlso requesting:\n${unpricedClubGear.map(g => `• ${g.name}`).join('\n')}` : '') +
-        `\n\nTotal: $${total}\n\nSwimmer Name: [Your swimmer's name]\nLevel: ${toId}\n\nThank you!`
+        `\n\nTotal: $${total}\n\nSwimmer${isMulti ? 's' : ''}: ${swimmerNamePlaceholder}\nLevel${isMulti ? 's' : ''}: ${levelSummary}\n\nThank you!`
       );
-      const discordMsg = `Hi! My swimmer is moving to ${toLevel ? toLevel.name : toId}. Could I get:\n\n${clubGear.map(g => `• ${g.name}${g.priceFromClub ? ' — $' + g.priceFromClub : ''}`).join('\n')}\n\nThanks! 🚀`;
+      const discordMsg = isMulti
+        ? `Hi! I have ${activeSwimmers.length} swimmers:\n\n${activeSwimmers.map(s => {
+            const lvl = gearData.levels.find(l => l.id === s.toId);
+            return `**${s.name}** → ${lvl ? lvl.name : s.toId}`;
+          }).join('\n')}\n\nCould I get:\n\n${clubGear.map(g => `• ${g.name}${g.priceFromClub ? ' — $' + g.priceFromClub : ''}`).join('\n')}\n\nThanks! 🚀`
+        : `Hi! My swimmer is moving to ${levelSummary}. Could I get:\n\n${clubGear.map(g => `• ${g.name}${g.priceFromClub ? ' — $' + g.priceFromClub : ''}`).join('\n')}\n\nThanks! 🚀`;
 
       html += `
         <div class="bg-teal-50 rounded-lg p-4 border border-teal-100">
