@@ -116,10 +116,22 @@
 
     <!-- ═══ Step 1: Setup ═══ -->
     <section id="step-1" class="wizard-panel hidden" aria-label="Step 1: Setup">
+
+      <!-- Swimmer Tabs (Issue #39) -->
+      <div id="swimmer-tabs" class="bg-white rounded-xl shadow-md p-4 mb-4 no-print" aria-label="Swimmers">
+        <div class="flex items-center gap-2 flex-wrap">
+          <div id="swimmer-tab-list" class="flex items-center gap-1 flex-wrap" role="tablist" aria-label="Swimmer tabs"></div>
+          <button id="add-swimmer-btn" class="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 hover:bg-teal-50 px-2 py-1.5 rounded-lg transition-colors font-semibold" aria-label="Add another swimmer">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Add Swimmer
+          </button>
+        </div>
+      </div>
+
       <div class="bg-white rounded-xl shadow-md p-6 mb-6">
         <h2 class="text-lg font-bold text-navy-900 mb-4 flex items-center gap-2">
           <svg class="w-5 h-5 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-          Select Swimmer's Level
+          <span id="setup-heading">Select Swimmer's Level</span>
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
