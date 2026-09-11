@@ -42,6 +42,13 @@
   const $btnBackToStep2 = document.getElementById('btn-back-to-step2');
   const $btnStartOver = document.getElementById('btn-start-over');
 
+  // Sticky bottom bar (Issue #42)
+  const $stickyBar = document.getElementById('sticky-bar');
+  const $stickyItemsNeeded = document.getElementById('sticky-items-needed');
+  const $stickyClubTotal = document.getElementById('sticky-club-total');
+  const $stickyStoreCount = document.getElementById('sticky-store-count');
+  const $stickyReviewBtn = document.getElementById('sticky-review-btn');
+
   // ── Bootstrap ──────────────────────────────────────────────
   async function init() {
     try {
@@ -104,6 +111,14 @@
     $btnBackToStep2.addEventListener('click', () => goToStep(2));
     $btnStartOver.addEventListener('click', startOver);
 
+    // Sticky bar review button (Issue #42)
+    if ($stickyReviewBtn) {
+      $stickyReviewBtn.addEventListener('click', () => {
+        renderShoppingList();
+        goToStep(3);
+      });
+    }
+
     // Step indicator clicks (only completed steps)
     for (let i = 1; i <= 3; i++) {
       const btn = document.getElementById('wizard-btn-' + i);
@@ -135,6 +150,14 @@
 
     // Update step indicators
     updateStepIndicators();
+
+    // Show/hide sticky bar (Issue #42) — only on Step 2
+    if (step === 2) {
+      showStickyBar();
+      updateStickyBar();
+    } else {
+      hideStickyBar();
+    }
 
     // Scroll to top of main content
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -361,6 +384,91 @@
     const total = gear.length;
     const owned = checkedItems.size;
     $checklistCount.textContent = `${owned}/${total} items owned`;
+    updateStickyBar();
+  }
+
+  // ── Sticky Bottom Bar (Issue #42) ────────────────────────
+  function showStickyBar() {
+    if (!$stickyBar) return;
+    // Remove hidden first, add sticky-hidden for transition start state
+    $stickyBar.classList.remove('hidden');
+    $stickyBar.classList.add('sticky-hidden');
+    // Force reflow so transition triggers
+    $stickyBar.offsetHeight;
+    $stickyBar.classList.remove('sticky-hidden');
+    document.body.classList.add('has-sticky-bar');
+  }
+
+  function hideStickyBar() {
+    if (!$stickyBar) return;
+    $stickyBar.classList.add('sticky-hidden');
+    document.body.classList.remove('has-sticky-bar');
+    // Fully hide after transition
+    setTimeout(() => {
+      if ($stickyBar.classList.contains('sticky-hidden')) {
+        $stickyBar.classList.add('hidden');
+      }
+    }, 300);
+  }
+
+  function updateStickyBar() {
+    if (!$stickyBar || currentStep !== 2) return;
+
+    const toId = $toSelect.value;
+    if (!toId) return;
+
+    const needed = targetGear.filter(g => !checkedItems.has(g.id));
+    const clubGear = needed.filter(g => g.source === 'club' || g.source === 'coach');
+    const clubTotal = clubGear.reduce((sum, g) => sum + (g.priceFromClub || 0), 0);
+    const storeItems = needed.filter(g => ['store', 'amazon'].includes(g.source));
+
+    // Update items needed
+    if ($stickyItemsNeeded) {
+      $stickyItemsNeeded.innerHTML = `
+        <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
+        <span class="font-semibold">${needed.length} item${needed.length !== 1 ? 's' : ''}</span> to buy`;
+    }
+
+    // Update club total
+    if ($stickyClubTotal) {
+      if (clubTotal > 0) {
+        $stickyClubTotal.classList.remove('hidden');
+        $stickyClubTotal.classList.add('sm:flex');
+        $stickyClubTotal.innerHTML = `
+          <svg class="w-4 h-4 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Club <span class="font-semibold">$${clubTotal}</span>`;
+      } else {
+        $stickyClubTotal.classList.add('hidden');
+        $stickyClubTotal.classList.remove('sm:flex');
+      }
+    }
+
+    // Update store count
+    if ($stickyStoreCount) {
+      if (storeItems.length > 0) {
+        $stickyStoreCount.classList.remove('hidden');
+        $stickyStoreCount.classList.add('sm:flex');
+        $stickyStoreCount.innerHTML = `
+          <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+          <span class="font-semibold">${storeItems.length}</span> store item${storeItems.length !== 1 ? 's' : ''}`;
+      } else {
+        $stickyStoreCount.classList.add('hidden');
+        $stickyStoreCount.classList.remove('sm:flex');
+      }
+    }
+
+    // Update review button text based on needed count
+    if ($stickyReviewBtn) {
+      if (needed.length === 0) {
+        $stickyReviewBtn.innerHTML = `
+          All Set! ✓
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>`;
+      } else {
+        $stickyReviewBtn.innerHTML = `
+          Review List
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>`;
+      }
+    }
   }
 
   // ── Step 3: Shopping List ──────────────────────────────────

@@ -298,6 +298,37 @@ input[type="checkbox"] {
   }
 }
 
+/* ── Sticky Bottom Bar (Issue #42) ────────────────────── */
+#sticky-bar {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+#sticky-bar.sticky-hidden {
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
+}
+/* Bottom padding when sticky bar visible so footer isn't hidden */
+body.has-sticky-bar {
+  padding-bottom: 64px;
+}
+@media (max-width: 640px) {
+  #sticky-bar .max-w-5xl {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    gap: 8px;
+  }
+  #sticky-bar .text-sm {
+    font-size: 12px;
+  }
+  body.has-sticky-bar {
+    padding-bottom: 56px;
+  }
+}
+/* Move toast above sticky bar when it's visible */
+body.has-sticky-bar #toast-container {
+  bottom: 72px;
+}
+
 /* ── Toast notification ──────────────────────────────── */
 .toast { animation: slideUp 0.3s ease, fadeOut 0.3s ease 2.7s; }
 @keyframes slideUp {
