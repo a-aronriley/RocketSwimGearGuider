@@ -87,7 +87,7 @@
     const targetGear = getGearForLevel(toId);
 
     if (fromId) {
-      // Upgrade flow: pre-check gear from previous level
+      // Upgrade flow: pre-check gear from previous level (Issue #6)
       const fromGear = getGearForLevel(fromId);
       fromGear.forEach(g => {
         if (targetGear.some(tg => tg.id === g.id)) {
@@ -96,8 +96,8 @@
       });
       showChecklist(targetGear, fromId, toId);
     } else {
-      // New swimmer: no checklist, show all gear
-      $checklistSection.classList.add('hidden');
+      // "None/New to club" flow (Issue #9): show checklist with nothing pre-checked
+      showChecklist(targetGear, null, toId);
     }
 
     renderShoppingList(targetGear, toId);
@@ -114,22 +114,33 @@
 
   // ── Show Level Info Bar ────────────────────────────────────
   function showLevelInfo(toLevel, fromLevel) {
-    let text = `<strong>${toLevel.name}</strong> — Ages ${toLevel.ageRange}`;
-    if (toLevel.coachRatio) text += ` · Coach ratio ${toLevel.coachRatio}`;
+    let text;
     if (fromLevel) {
       text = `Upgrading from <strong>${fromLevel.name}</strong> → <strong>${toLevel.name}</strong>`;
+    } else {
+      text = `New to RocketSwim → Joining <strong>${toLevel.name}</strong> — Ages ${toLevel.ageRange}`;
     }
     $levelInfoText.innerHTML = text;
     $levelInfo.classList.remove('hidden');
   }
 
-  // ── Checklist ──────────────────────────────────────────────
+  // ── Checklist (Issues #6, #8, #9) ─────────────────────────
   function showChecklist(targetGear, fromId, toId) {
-    const fromGear = getGearForLevel(fromId);
+    const isNewSwimmer = !fromId;
+    const fromGear = isNewSwimmer ? [] : getGearForLevel(fromId);
     const fromIds = new Set(fromGear.map(g => g.id));
 
-    $checklistTitle.textContent = `Gear Checklist — What do you already have?`;
-    $checklistInstructions.innerHTML = `Items from your previous level (<strong>${fromId}</strong>) are pre-checked. <strong>Uncheck</strong> anything you don't actually have — those items will appear in your shopping list.`;
+    // Determine which level each item first appears at (for "NEW at [level]" badge)
+    const levelOrder = gearData.levels.map(l => l.id);
+
+    $checklistTitle.textContent = 'Gear Checklist — What do you already have?';
+
+    if (isNewSwimmer) {
+      $checklistInstructions.innerHTML = 'You\'re new to RocketSwim! <strong>Check off</strong> any gear you already own — unchecked items will appear in your shopping list below.';
+    } else {
+      const fromLevel = gearData.levels.find(l => l.id === fromId);
+      $checklistInstructions.innerHTML = `Items from <strong>${fromLevel.name} (${fromId})</strong> are pre-checked. <strong>Uncheck</strong> anything you don't actually have — those items will appear in your shopping list.`;
+    }
 
     $checklistItems.innerHTML = '';
 
@@ -145,23 +156,46 @@
       $checklistItems.appendChild(catHeader);
 
       items.forEach(gear => {
-        const isFromLevel = fromIds.has(gear.id);
-        const isNew = !isFromLevel;
+        const isOwned = fromIds.has(gear.id);
         const isRequired = gear.levels[toId] === 'R';
         const isOptional = gear.levels[toId] === 'O';
 
+        // Determine if item is NEW at target level (Issue #8)
+        // "NEW" = not available at the from-level (or new swimmer)
+        const isNew = !isNewSwimmer && !isOwned;
+
+        // Find the first level where this item appears (for "NEW at [level]" text)
+        let firstAppearLevel = '';
+        if (isNew && !isNewSwimmer) {
+          for (const lvId of levelOrder) {
+            if (gear.levels[lvId] === 'R' || gear.levels[lvId] === 'O') {
+              firstAppearLevel = lvId;
+              break;
+            }
+          }
+        }
+
+        // Build badge HTML (Issue #8)
+        let badgeHtml = '';
+        if (isRequired) badgeHtml += '<span class="badge-required text-xs px-2 py-0.5 rounded-full font-medium">Required</span>';
+        if (isOptional) badgeHtml += '<span class="badge-optional text-xs px-2 py-0.5 rounded-full font-medium">Optional</span>';
+
+        if (isOwned) {
+          badgeHtml += '<span class="badge-have text-xs px-2 py-0.5 rounded-full font-medium">You have this ✓</span>';
+        } else if (!isNewSwimmer) {
+          badgeHtml += `<span class="badge-new text-xs px-2 py-0.5 rounded-full font-medium">NEW at ${toId}</span>`;
+        }
+
         const div = document.createElement('label');
-        div.className = `gear-card flex items-center gap-3 p-3 rounded-lg border cursor-pointer ${isFromLevel ? 'bg-gray-50 border-gray-200' : 'bg-green-50 border-green-200'}`;
+        div.className = `gear-card flex items-center gap-3 p-3 rounded-lg border cursor-pointer ${isOwned ? 'bg-gray-50 border-gray-200' : 'bg-green-50 border-green-200'}`;
         div.innerHTML = `
           <input type="checkbox" class="w-5 h-5 rounded border-gray-300 text-teal-500 focus:ring-teal-400 cursor-pointer"
-            data-gear-id="${gear.id}" ${isFromLevel ? 'checked' : ''}>
+            data-gear-id="${gear.id}" ${isOwned ? 'checked' : ''}
+            aria-label="${gear.name} — ${isRequired ? 'required' : 'optional'}${isOwned ? ', you have this' : ', needed'}">
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
               <span class="font-medium text-sm">${gear.name}</span>
-              ${isRequired ? '<span class="badge-required text-xs px-2 py-0.5 rounded-full font-medium">Required</span>' : ''}
-              ${isOptional ? '<span class="badge-optional text-xs px-2 py-0.5 rounded-full font-medium">Optional</span>' : ''}
-              ${isNew ? '<span class="badge-new text-xs px-2 py-0.5 rounded-full font-medium">NEW</span>' : ''}
-              ${isFromLevel ? '<span class="badge-have text-xs px-2 py-0.5 rounded-full font-medium">From ' + fromId + '</span>' : ''}
+              ${badgeHtml}
             </div>
             ${gear.notes ? '<p class="text-xs text-gray-500 mt-0.5">' + gear.notes + '</p>' : ''}
           </div>
@@ -172,14 +206,16 @@
         checkbox.addEventListener('change', () => {
           if (checkbox.checked) {
             checkedItems.add(gear.id);
+            div.className = 'gear-card flex items-center gap-3 p-3 rounded-lg border cursor-pointer bg-gray-50 border-gray-200';
           } else {
             checkedItems.delete(gear.id);
+            div.className = 'gear-card flex items-center gap-3 p-3 rounded-lg border cursor-pointer bg-green-50 border-green-200';
           }
           renderShoppingList(targetGear, toId);
         });
 
         // Sync initial state
-        if (isFromLevel) {
+        if (isOwned) {
           checkedItems.add(gear.id);
         }
 
