@@ -29,10 +29,33 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Print helpers ───────────────────────────────────── */
+/* ── Print helpers (Issue #14) ───────────────────────── */
 @media print {
   .no-print  { display: none !important; }
   .print-only { display: block !important; }
+
+  /* Clean print layout */
+  body { background: white !important; font-size: 12pt; }
+  header { background: white !important; color: black !important; border-bottom: 2px solid #0A1628; }
+  header h1 { color: #0A1628 !important; }
+  header h1 span { color: #00BCD4 !important; }
+  header p { color: #666 !important; }
+  footer { display: none !important; }
+  main { padding: 0 !important; }
+
+  /* Remove shadows and hover effects */
+  .gear-card { box-shadow: none !important; transform: none !important; }
+  section > div { box-shadow: none !important; border: 1px solid #ddd !important; }
+
+  /* Ensure content fits page */
+  * { break-inside: avoid; }
+
+  /* Show URLs for print */
+  a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 9pt; color: #666; }
+  a[href^="mailto"]::after { content: " (" attr(href) ")"; font-size: 9pt; color: #666; }
+
+  /* Hide toast container */
+  #toast-container { display: none !important; }
 }
 
 /* ── Toast notification ──────────────────────────────── */
