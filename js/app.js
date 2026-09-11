@@ -33,9 +33,16 @@
   // ── Bootstrap ──────────────────────────────────────────────
   async function init() {
     try {
-      const resp = await fetch('data/gear-data.json');
-      if (!resp.ok) throw new Error('Failed to load gear data');
-      gearData = await resp.json();
+      // Use GearDataLoader (gear-data.js) for data loading, Sheets fallback, and validation
+      if (window.GearDataLoader) {
+        gearData = await window.GearDataLoader.loadGearData();
+      } else {
+        // Fallback if gear-data.js not loaded
+        console.warn('[App] GearDataLoader not found, loading JSON directly');
+        const resp = await fetch('data/gear-data.json');
+        if (!resp.ok) throw new Error('Failed to load gear data');
+        gearData = await resp.json();
+      }
       populateDropdowns();
       renderStores();
       $fromSelect.addEventListener('change', onSelectionChange);
