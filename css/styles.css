@@ -1,6 +1,7 @@
 /* RocketSwim Gear Guider — Custom Styles
    Tailwind CDN handles utility classes; this file covers
-   badges, source-indicator borders, animations and print. */
+   badges, source-indicator borders, animations, mobile,
+   accessibility, loading states and print. */
 
 /* ── Badges ──────────────────────────────────────────── */
 .badge-required { background: #00BCD4; color: white; }
@@ -29,6 +30,129 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ── Skip-to-content link (Issue #22) ────────────────── */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 16px;
+  z-index: 100;
+  padding: 8px 16px;
+  background: #00BCD4;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 0 0 8px 8px;
+  text-decoration: none;
+  transition: top 0.2s ease;
+}
+.skip-link:focus {
+  top: 0;
+  outline: 3px solid #FFC107;
+  outline-offset: 2px;
+}
+
+/* ── Focus indicators (Issue #22) ────────────────────── */
+*:focus-visible {
+  outline: 3px solid #00BCD4;
+  outline-offset: 2px;
+}
+select:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid #00BCD4;
+  outline-offset: 2px;
+}
+input[type="checkbox"]:focus-visible {
+  outline: 3px solid #00BCD4;
+  outline-offset: 3px;
+}
+
+/* ── Touch targets (Issue #19) — min 44px ────────────── */
+input[type="checkbox"] {
+  min-width: 22px;
+  min-height: 22px;
+}
+/* The label wrapping checkboxes provides the full 44px touch area */
+.gear-card {
+  min-height: 48px;
+}
+
+/* ── Loading skeleton (Issue #20) ────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, #e8eaf0 25%, #f0f1f5 50%, #e8eaf0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.skeleton-text {
+  height: 16px;
+  margin-bottom: 8px;
+}
+.skeleton-select {
+  height: 48px;
+  margin-bottom: 8px;
+}
+.skeleton-heading {
+  height: 24px;
+  width: 60%;
+  margin-bottom: 16px;
+}
+
+/* ── Mobile optimizations (Issue #19) ────────────────── */
+@media (max-width: 640px) {
+  /* Larger touch targets on mobile */
+  select {
+    min-height: 48px;
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+  button {
+    min-height: 44px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  /* Gear cards: stack content vertically on small screens */
+  .gear-card {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  /* Better spacing for main content */
+  main {
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-top: 16px;
+  }
+
+  /* Header compact */
+  header .max-w-5xl {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  /* Full-width buttons on mobile */
+  .gear-card a,
+  .gear-card button {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* Badge wrapping */
+  .badge-required,
+  .badge-optional,
+  .badge-new,
+  .badge-have {
+    font-size: 11px;
+    padding: 2px 6px;
+  }
+}
+
 /* ── Print helpers (Issue #14) ───────────────────────── */
 @media print {
   .no-print  { display: none !important; }
@@ -42,6 +166,7 @@
   header p { color: #666 !important; }
   footer { display: none !important; }
   main { padding: 0 !important; }
+  .skip-link { display: none !important; }
 
   /* Remove shadows and hover effects */
   .gear-card { box-shadow: none !important; transform: none !important; }

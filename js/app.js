@@ -11,6 +11,8 @@
   let checkedItems = new Set(); // items the parent says they already own
 
   // ── DOM refs ───────────────────────────────────────────────
+  const $loadingState = document.getElementById('loading-state');
+  const $levelSelector = document.getElementById('level-selector');
   const $fromSelect = document.getElementById('level-from');
   const $toSelect = document.getElementById('level-to');
   const $levelInfo = document.getElementById('level-info');
@@ -43,14 +45,32 @@
         if (!resp.ok) throw new Error('Failed to load gear data');
         gearData = await resp.json();
       }
+
+      // Hide loading skeleton, show level selector (Issue #20)
+      if ($loadingState) $loadingState.classList.add('hidden');
+      if ($levelSelector) $levelSelector.classList.remove('hidden');
+
       populateDropdowns();
       renderStores();
       $fromSelect.addEventListener('change', onSelectionChange);
       $toSelect.addEventListener('change', onSelectionChange);
     } catch (err) {
       console.error('Gear data load error:', err);
-      document.querySelector('main').innerHTML =
-        '<div class="bg-red-50 border border-red-200 rounded-xl p-8 text-center mt-8"><p class="text-red-700 font-semibold">Unable to load gear data. Please refresh or try again later.</p></div>';
+      // Replace loading state with error message (Issue #20)
+      if ($loadingState) $loadingState.classList.add('hidden');
+      const main = document.getElementById('main-content') || document.querySelector('main');
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'bg-red-50 border border-red-200 rounded-xl p-8 text-center mt-8';
+      errorDiv.setAttribute('role', 'alert');
+      errorDiv.innerHTML = `
+        <div class="text-4xl mb-3" aria-hidden="true">😕</div>
+        <h2 class="text-lg font-bold text-red-800 mb-2">Unable to Load Gear Data</h2>
+        <p class="text-red-700 mb-4">Something went wrong while loading the equipment list.</p>
+        <button onclick="location.reload()" class="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+          Try Again
+        </button>
+      `;
+      main.insertBefore(errorDiv, main.firstChild);
     }
   }
 
@@ -370,8 +390,9 @@
             <span class="font-bold text-teal-900 text-lg">$${total}</span>
           </div>
           <a href="mailto:${gearData.payment.clubEmail}?subject=${subject}&body=${body}"
-            class="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors no-print">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            class="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors no-print"
+            aria-label="Email payment request for $${total} to ${gearData.payment.clubEmail}">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
             📧 Email Payment Request
           </a>
           <p class="text-xs text-teal-600 mt-2">Sends to ${gearData.payment.clubEmail}</p>
@@ -393,7 +414,8 @@
             ${coachItems.map(g => `<li>• ${g.name}</li>`).join('')}
           </ul>
           <button onclick="copyToClipboard(\`${discordMsg.replace(/`/g, '\\`')}\`)"
-            class="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors no-print">
+            class="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors no-print"
+            aria-label="Copy Discord message for ${coachItems.length} coach gear items">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
             📋 Copy Discord Message
           </button>
@@ -421,9 +443,10 @@
                   ${isSplashables ? '<span class="ml-1 text-xs bg-teal-100 text-teal-700 px-1.5 py-0.5 rounded font-medium">20% club discount</span>' : ''}
                 </div>
                 <a href="${g.purchaseUrl}" target="_blank" rel="noopener"
-                  class="inline-flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap no-print">
+                  class="inline-flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap no-print"
+                  aria-label="Buy ${g.name} at ${storeName} — opens in new tab">
                   Buy at ${storeName}
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                 </a>
               </li>`;
             }).join('')}
@@ -452,7 +475,8 @@
 
     $storesList.innerHTML = gearData.stores.map(store => `
       <a href="${store.url}" target="_blank" rel="noopener"
-        class="block p-4 rounded-lg border border-gray-200 hover:border-teal-300 hover:shadow-md transition-all bg-white">
+        class="block p-4 rounded-lg border border-gray-200 hover:border-teal-300 hover:shadow-md transition-all bg-white"
+        aria-label="Visit ${store.name} — ${store.location}${store.discount ? ', ' + store.discount : ''}">
         <h3 class="font-semibold text-navy-900 text-sm">${store.name}</h3>
         <p class="text-xs text-gray-500 mt-1">${store.location}</p>
         ${store.discount ? `<span class="inline-block mt-2 text-xs bg-teal-50 text-teal-700 px-2 py-1 rounded-full font-medium">${store.discount}</span>` : ''}
@@ -482,8 +506,9 @@
       const isSplashables = storeName.toLowerCase().includes('splashable');
       return `<a href="${gear.purchaseUrl}" target="_blank" rel="noopener"
         class="inline-flex items-center gap-1 bg-navy-900 hover:bg-navy-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors no-print whitespace-nowrap"
-        title="${isSplashables ? '20% club discount at Splashables' : 'Buy at ' + storeName}">
-        Buy at ${storeName} <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+        title="${isSplashables ? '20% club discount at Splashables' : 'Buy at ' + storeName}"
+        aria-label="Buy ${gear.name} at ${storeName} — opens in new tab">
+        Buy at ${storeName} <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
       </a>`;
     }
     if ((gear.source === 'club' || gear.source === 'coach') && gear.priceFromClub) {
