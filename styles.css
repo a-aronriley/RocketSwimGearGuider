@@ -11,24 +11,26 @@
 
 @layer tokens {
   :root {
-    --blue: #1e73be;
-    --cyan: #13aff0;
-    --magenta: #d81b78;
+    --blue: #0073e6;
+    --blue-dark: #0057a8;
+    --blue-light: #e8f2ff;
+    --pink: #e8336d;
+    --green: #22c55e;
     --ink: #012b47;
-    --muted: #4a5b70;
-    --line: #d5e2ee;
+    --muted: #7a96b2;
+    --line: #dce8f5;
     --paper: #ffffff;
-    --wash: #f3f8fc;
+    --wash: #f4f8ff;
     --warning: #c41616;
-    --have: #0d6a4f;
+    --have: #22c55e;
     --retire: #8a4b08;
-    --need: #0b4f8a;
-    --discount: #0d6a4f;
-    --text: var(--ink);
+    --need: #0073e6;
+    --discount: #22c55e;
+    --text: #1a3a5c;
     --bg: var(--wash);
     --surface: var(--paper);
-    --accent: var(--magenta);
-    --focus: var(--cyan);
+    --accent: var(--pink);
+    --focus: var(--blue);
     --font: "Montserrat", Helvetica, Arial, sans-serif;
     --text-body: clamp(1rem, 0.95rem + 0.3vw, 1.0625rem);
     --text-sm: 0.875rem;
@@ -45,7 +47,7 @@
     --space-10: 2.5rem;
     --radius: 0.75rem;
     --tap: 2.75rem;
-    --shadow: 0 0.5rem 1.25rem rgb(1 43 71 / 0.08);
+    --shadow: 0 12px 40px rgba(0, 100, 200, 0.18), 0 2px 8px rgba(0, 0, 0, 0.08);
     --max: 42rem;
     --footer-safe: 7.5rem;
   }
@@ -115,7 +117,7 @@
     line-height: 1.2;
     text-align: center;
   }
-  .site-header h1 span { color: var(--cyan); }
+  .site-header h1 span { color: var(--blue); }
   .site-header p {
     color: rgb(255 255 255 / 0.78);
     font-size: var(--text-sm);
@@ -140,7 +142,7 @@
     gap: var(--space-2);
     text-align: center;
   }
-  .site-footer a { color: var(--cyan); }
+  .site-footer a { color: var(--blue); }
   .site-footer .tagline { font-size: var(--text-xs); color: rgb(255 255 255 / 0.5); margin-block-start: var(--space-1); }
 }
 
@@ -155,7 +157,7 @@
     font-weight: 600;
     font-size: var(--text-sm);
   }
-  .steps button[aria-current="step"] { border-color: var(--cyan); background: #e8f7fd; color: var(--need); }
+  .steps button[aria-current="step"] { border-color: var(--blue); background: var(--blue-light); color: var(--need); }
   .steps button:disabled { opacity: 0.45; cursor: not-allowed; }
 
   /* Panel */
@@ -192,9 +194,9 @@
     cursor: pointer;
   }
   .choice-card:has(input:checked) {
-    border-color: var(--cyan);
-    box-shadow: inset 0 0 0 1px var(--cyan);
-    background: #e8f7fd;
+    border-color: var(--blue);
+    box-shadow: inset 0 0 0 1px var(--blue);
+    background: var(--blue-light);
   }
   .choice-card input { inline-size: 1.25rem; block-size: 1.25rem; margin-block-start: 0.2rem; accent-color: var(--blue); }
   .choice-card strong { display: block; font-size: 1.0625rem; }
@@ -219,7 +221,7 @@
     border: 0;
     border-radius: var(--radius);
     font-weight: 700;
-    background: var(--magenta);
+    background: var(--pink);
     color: var(--paper);
     text-decoration: none;
     display: inline-flex;
@@ -234,7 +236,7 @@
 
   .info {
     padding: var(--space-4);
-    background: #e8f7fd;
+    background: var(--blue-light);
     border-radius: var(--radius);
   }
 
@@ -273,7 +275,7 @@
   .badge--have { background: #d8f3ea; color: var(--have); }
   .badge--retire { background: #f8e6cc; color: var(--retire); }
   .badge--optional { background: #eee6f6; color: #5b3b82; }
-  .badge--hand { background: var(--cyan); color: var(--ink); }
+  .badge--hand { background: var(--blue); color: var(--paper); }
   .badge--discount { background: #d8f3ea; color: var(--discount); font-size: var(--text-xs); }
 
   /* Checkbox */
@@ -315,7 +317,7 @@
   }
   .sticky-bar__inner { max-inline-size: var(--max); margin-inline: auto; display: grid; gap: var(--space-3); }
   .totals { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); font-size: var(--text-sm); }
-  .totals strong { color: var(--cyan); }
+  .totals strong { color: var(--blue); }
   .note-incomplete { color: #ffd27a; font-size: var(--text-sm); }
 
   /* Review blocks */
@@ -389,7 +391,7 @@
     align-items: center;
     gap: var(--space-2);
   }
-  .toast .toast-icon { color: var(--cyan); }
+  .toast .toast-icon { color: var(--blue); }
   @keyframes toast-in { from { opacity: 0; transform: translateY(1rem); } to { opacity: 1; transform: translateY(0); } }
 
   /* All-set celebration */

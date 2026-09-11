@@ -1,4 +1,4 @@
-const CACHE = "rocket-gear-guide-v3";
+const CACHE = "rocket-gear-guide-v4";
 const ASSETS = [
   "./",
   "./index.html",
