@@ -341,21 +341,18 @@
   // ── Cart & Payment Summary (Issues #10-13) ────────────────
   function renderCartSummary(needed) {
     // Group by source (Issue #10)
-    // "Payment items" = club or coach items that have a price → pay via e-transfer email
-    const paymentItems = needed.filter(g =>
-      (g.source === 'club' || g.source === 'coach') && g.priceFromClub
-    );
-    // "Coach items" = coach-sourced items WITHOUT a price → ask via Discord
-    const coachItems = needed.filter(g => g.source === 'coach' && !g.priceFromClub);
-    // "Store items" = store/amazon/swimoutlet with buy links
+    // "Club gear" = ALL club + coach items (merged into one section)
+    const clubGear = needed.filter(g => g.source === 'club' || g.source === 'coach');
+    const pricedClubGear = clubGear.filter(g => g.priceFromClub);
+    const unpricedClubGear = clubGear.filter(g => !g.priceFromClub);
+    // "Store items" = store/amazon with buy links
     const storeItems = needed.filter(g =>
       ['store', 'amazon'].includes(g.source) && g.purchaseUrl
     );
     // "Generic items" = available anywhere
     const anyItems = needed.filter(g => g.source === 'any');
 
-    const hasAnything = paymentItems.length > 0 || coachItems.length > 0 ||
-                        storeItems.length > 0 || anyItems.length > 0;
+    const hasAnything = clubGear.length > 0 || storeItems.length > 0 || anyItems.length > 0;
 
     if (!hasAnything) {
       $cartSummary.classList.add('hidden');
@@ -366,15 +363,17 @@
     const toLevel = gearData.levels.find(l => l.id === toId);
     let html = '';
 
-    // ── Club/Coach priced items — payment via email (Issue #11) ──
-    if (paymentItems.length > 0) {
-      const total = paymentItems.reduce((sum, g) => sum + (g.priceFromClub || 0), 0);
+    // ── Club + Coach gear — merged single section ──
+    if (clubGear.length > 0) {
+      const total = pricedClubGear.reduce((sum, g) => sum + (g.priceFromClub || 0), 0);
       const subject = encodeURIComponent(`RocketSwim Gear Payment — ${toLevel ? toLevel.name : toId}`);
       const body = encodeURIComponent(
         `Hi,\n\nI'd like to order the following gear:\n\n` +
-        paymentItems.map(g => `• ${g.name} — $${g.priceFromClub}`).join('\n') +
+        pricedClubGear.map(g => `• ${g.name} — $${g.priceFromClub}`).join('\n') +
+        (unpricedClubGear.length > 0 ? `\n\nAlso requesting:\n${unpricedClubGear.map(g => `• ${g.name}`).join('\n')}` : '') +
         `\n\nTotal: $${total}\n\nSwimmer Name: [Your swimmer's name]\nLevel: ${toId}\n\nThank you!`
       );
+      const discordMsg = `Hi! My swimmer is moving to ${toLevel ? toLevel.name : toId}. Could I get:\n\n${clubGear.map(g => `• ${g.name}${g.priceFromClub ? ' — $' + g.priceFromClub : ''}`).join('\n')}\n\nThanks! 🚀`;
 
       html += `
         <div class="bg-teal-50 rounded-lg p-4 border border-teal-100">
@@ -383,43 +382,32 @@
             Club Gear — Pay via E-Transfer
           </h4>
           <ul class="text-sm text-teal-900 mb-3 space-y-1">
-            ${paymentItems.map(g => `<li class="flex justify-between"><span>${g.name}</span><span class="font-medium">$${g.priceFromClub}</span></li>`).join('')}
+            ${clubGear.map(g => `<li class="flex justify-between"><span>${g.name}</span><span class="font-medium ${g.priceFromClub ? 'text-teal-800' : 'text-teal-600 italic'}">${g.priceFromClub ? '$' + g.priceFromClub : 'Ask coach'}</span></li>`).join('')}
           </ul>
+          ${total > 0 ? `
           <div class="flex items-center justify-between border-t border-teal-200 pt-2 mb-3">
             <span class="font-bold text-teal-900">Total</span>
             <span class="font-bold text-teal-900 text-lg">$${total}</span>
+          </div>` : ''}
+          <div class="flex flex-wrap gap-2 no-print">
+            ${pricedClubGear.length > 0 ? `
+            <a href="mailto:${gearData.payment.clubEmail}?subject=${subject}&body=${body}"
+              class="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+              aria-label="Email payment request for $${total} to ${gearData.payment.clubEmail}">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+              📧 Email Payment Request
+            </a>` : ''}
+            <button onclick="copyToClipboard(\`${discordMsg.replace(/`/g, '\\`')}\`)"
+              class="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+              aria-label="Copy Discord message for ${clubGear.length} gear items">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+              📋 DM Coach
+            </button>
           </div>
-          <a href="mailto:${gearData.payment.clubEmail}?subject=${subject}&body=${body}"
-            class="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors no-print"
-            aria-label="Email payment request for $${total} to ${gearData.payment.clubEmail}">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-            📧 Email Payment Request
-          </a>
-          <p class="text-xs text-teal-600 mt-2">Sends to ${gearData.payment.clubEmail}</p>
-        </div>
-      `;
-    }
-
-    // ── Coach items without price — Discord DM (Issue #12) ──
-    if (coachItems.length > 0) {
-      const discordMsg = `Hi! My swimmer is moving to ${toLevel ? toLevel.name : toId}. Could I get:\n\n${coachItems.map(g => `• ${g.name}`).join('\n')}\n\nThanks! 🚀`;
-
-      html += `
-        <div class="bg-amber-50 rounded-lg p-4 border border-amber-100 mt-4">
-          <h4 class="font-semibold text-amber-800 text-sm mb-2 flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-            Coach Gear — DM in Discord #gear
-          </h4>
-          <ul class="text-sm text-amber-900 mb-3 space-y-1">
-            ${coachItems.map(g => `<li>• ${g.name}</li>`).join('')}
-          </ul>
-          <button onclick="copyToClipboard(\`${discordMsg.replace(/`/g, '\\`')}\`)"
-            class="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors no-print"
-            aria-label="Copy Discord message for ${coachItems.length} coach gear items">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
-            📋 Copy Discord Message
-          </button>
-          <p class="text-xs text-amber-600 mt-2">${gearData.payment.coachContact}</p>
+          <div class="flex flex-wrap gap-4 mt-2 text-xs no-print">
+            ${pricedClubGear.length > 0 ? `<span class="text-teal-600">Sends to ${gearData.payment.clubEmail}</span>` : ''}
+            <span class="text-amber-600">${gearData.payment.coachContact}</span>
+          </div>
         </div>
       `;
     }
