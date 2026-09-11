@@ -1,7 +1,7 @@
 {
   "config": {
     "dataSource": "json",
-    "sheetsUrl": null
+    "sheetsUrl": "https://docs.google.com/spreadsheets/d/1ki2BuJM807boWUtz9JLaoJcFKUr_xZ-RlrEsX_X3roI/gviz/tq?tqx=out:csv"
   },
   "levels": [
     { "id": "J3", "name": "Junior 3", "ageRange": "7-9", "competitive": "Intro", "coachRatio": "10:1" },
@@ -73,10 +73,11 @@
       "name": "Pullbuoy",
       "category": "WATER",
       "levels": { "J3": "R", "J2": "R", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "R" },
-      "priceFromClub": 15,
-      "purchaseUrl": null,
-      "source": "club",
-      "notes": "Available from club / ask coach"
+      "priceFromClub": null,
+      "purchaseUrl": "https://splashables.com/store/tyr-pull-float.html",
+      "source": "store",
+      "storeName": "Splashables",
+      "notes": ""
     },
     {
       "id": "paddles-small-0",
@@ -177,10 +178,10 @@
       "category": "WATER",
       "levels": { "J3": "", "J2": "", "J1": "", "S3": "", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
       "priceFromClub": null,
-      "purchaseUrl": "https://www.swimoutlet.com/products/arena-mens-reversible-drag-suit-8190083",
+      "purchaseUrl": "https://goswim.ca/products/finis-ultimate-drag-suit",
       "source": "store",
-      "storeName": "SwimOutlet",
-      "notes": ""
+      "storeName": "GoSwim.ca",
+      "notes": "Also available at triboutique.ca"
     },
     {
       "id": "drag-suit-pockets",
@@ -188,10 +189,10 @@
       "category": "WATER",
       "levels": { "J3": "", "J2": "", "J1": "", "S3": "", "S2": "", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
       "priceFromClub": null,
-      "purchaseUrl": "https://www.swimoutlet.com/products/finis-ultimate-drag-suit-18907",
+      "purchaseUrl": "https://splashables.com/store/poly-mesh-training-suit-adult-p171.html",
       "source": "store",
-      "storeName": "SwimOutlet",
-      "notes": ""
+      "storeName": "Splashables",
+      "notes": "Also available at lysports.com"
     },
     {
       "id": "drag-socks",
@@ -228,10 +229,11 @@
       "name": "Resistance Band",
       "category": "DRYLAND",
       "levels": { "J3": "", "J2": "R", "J1": "R", "S3": "R", "S2": "R", "S1": "R", "CMS": "R", "MS": "R", "MSIC": "R", "Masters": "" },
-      "priceFromClub": 10,
-      "purchaseUrl": null,
-      "source": "club",
-      "notes": "Available from club / ask coach"
+      "priceFromClub": null,
+      "purchaseUrl": "https://splashables.com/store/water-workout-cuffs-p278-p323-p324-p327-p408.html",
+      "source": "store",
+      "storeName": "Splashables",
+      "notes": "TYR Elite Resistance Tubing at Splashables (20% club discount). Alternative: TheraBand set on Amazon.ca"
     },
     {
       "id": "skipping-rope",
@@ -307,7 +309,7 @@
   "stores": [
     { "name": "Splashables", "location": "Toronto", "discount": "20% club discount", "url": "https://splashables.com" },
     { "name": "TeamAquatics", "location": "Mississauga/Burlington", "discount": null, "url": "https://team-aquatic.com" },
-    { "name": "SwimOutlet", "location": "Online", "discount": null, "url": "https://www.swimoutlet.com" }
+    { "name": "LySports", "location": "Windsor, ON (Online)", "discount": null, "url": "https://www.lysports.com" }
   ],
   "payment": {
     "clubEmail": "payments@rocketswim.com",
