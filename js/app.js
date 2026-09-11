@@ -296,14 +296,11 @@
     showChecklist(targetGear, fromId, toId);
   }
 
-  // ── Checklist (Issues #6, #8, #9) ─────────────────────────
+  // ── Checklist (Issues #6, #8, #9, #41) ────────────────────
   function showChecklist(gear, fromId, toId) {
     const isNewSwimmer = !fromId;
     const fromGear = isNewSwimmer ? [] : getGearForLevel(fromId);
     const fromIds = new Set(fromGear.map(g => g.id));
-
-    // Determine level order
-    const levelOrder = gearData.levels.map(l => l.id);
 
     $checklistTitle.textContent = 'Gear Checklist — What do you already have?';
 
@@ -311,73 +308,149 @@
       $checklistInstructions.innerHTML = 'You\'re new to RocketSwim! <strong>Check off</strong> any gear you already own — unchecked items will appear in your shopping list.';
     } else {
       const fromLevel = gearData.levels.find(l => l.id === fromId);
-      $checklistInstructions.innerHTML = `Items from <strong>${fromLevel.name} (${fromId})</strong> are pre-checked. <strong>Uncheck</strong> anything you don't actually have — those items will appear in your shopping list.`;
+      $checklistInstructions.innerHTML = `Moving up from <strong>${fromLevel.name}</strong> — new items to get are shown first. Your existing gear is in the collapsible section below. <strong>Uncheck</strong> anything you don't actually have.`;
     }
 
     $checklistItems.innerHTML = '';
 
-    // Group by category
-    const categories = groupByCategory(gear);
+    // For upgrade flows, split into new vs carrying-over items (Issue #41)
+    if (!isNewSwimmer) {
+      const newItems = gear.filter(g => !fromIds.has(g.id));
+      const carryOverItems = gear.filter(g => fromIds.has(g.id));
 
-    for (const [cat, items] of Object.entries(categories)) {
-      const catHeader = document.createElement('div');
-      catHeader.className = 'mt-4 mb-2 first:mt-0';
-      catHeader.innerHTML = `<h3 class="text-sm font-bold text-navy-600 uppercase tracking-wider flex items-center gap-2">
-        ${cat === 'WATER' ? '🏊' : '🏋️'} ${cat} Gear
-      </h3>`;
-      $checklistItems.appendChild(catHeader);
+      // ── New items section (prominent) ──
+      if (newItems.length > 0) {
+        const newHeader = document.createElement('div');
+        newHeader.className = 'mb-2';
+        newHeader.innerHTML = `<h3 class="text-sm font-bold text-green-700 uppercase tracking-wider flex items-center gap-2">
+          🆕 New Gear for ${toId} <span class="text-xs font-normal text-gray-500">(${newItems.length} item${newItems.length !== 1 ? 's' : ''})</span>
+        </h3>`;
+        $checklistItems.appendChild(newHeader);
 
-      items.forEach(gearItem => {
-        const isOwned = fromIds.has(gearItem.id);
-        const isRequired = gearItem.levels[toId] === 'R';
-        const isOptional = gearItem.levels[toId] === 'O';
-        const isNew = !isNewSwimmer && !isOwned;
-
-        // Build badge HTML (Issue #8)
-        let badgeHtml = '';
-        if (isRequired) badgeHtml += '<span class="badge-required text-xs px-2 py-0.5 rounded-full font-medium">Required</span>';
-        if (isOptional) badgeHtml += '<span class="badge-optional text-xs px-2 py-0.5 rounded-full font-medium">Optional</span>';
-
-        if (isOwned) {
-          badgeHtml += '<span class="badge-have text-xs px-2 py-0.5 rounded-full font-medium">You have this ✓</span>';
-        } else if (!isNewSwimmer) {
-          badgeHtml += `<span class="badge-new text-xs px-2 py-0.5 rounded-full font-medium">NEW at ${toId}</span>`;
-        }
-
-        const div = document.createElement('label');
-        div.className = `gear-card flex items-center gap-3 p-3 rounded-lg border cursor-pointer ${checkedItems.has(gearItem.id) ? 'bg-gray-50 border-gray-200' : 'bg-green-50 border-green-200'}`;
-        div.innerHTML = `
-          <input type="checkbox" class="w-5 h-5 rounded border-gray-300 text-teal-500 focus:ring-teal-400 cursor-pointer"
-            data-gear-id="${gearItem.id}" ${checkedItems.has(gearItem.id) ? 'checked' : ''}
-            aria-label="${gearItem.name} — ${isRequired ? 'required' : 'optional'}${checkedItems.has(gearItem.id) ? ', you have this' : ', needed'}">
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="font-medium text-sm">${gearItem.name}</span>
-              ${badgeHtml}
-            </div>
-            ${gearItem.model ? '<p class="text-xs text-teal-700 mt-0.5 font-medium">' + gearItem.model + '</p>' : ''}
-            ${gearItem.notes ? '<p class="text-xs text-gray-500 mt-0.5">' + gearItem.notes + '</p>' : ''}
-          </div>
-          ${getSourceBadge(gearItem)}
+        newItems.forEach(gearItem => {
+          $checklistItems.appendChild(buildChecklistCard(gearItem, toId, fromIds, isNewSwimmer, gear));
+        });
+      } else {
+        const noNewDiv = document.createElement('div');
+        noNewDiv.className = 'p-4 bg-green-50 rounded-lg border border-green-200 text-center';
+        noNewDiv.innerHTML = `
+          <div class="text-3xl mb-2" aria-hidden="true">✅</div>
+          <p class="text-sm font-semibold text-green-800">No new gear needed!</p>
+          <p class="text-xs text-green-600 mt-1">All gear from your previous level carries over to ${toId}.</p>
         `;
+        $checklistItems.appendChild(noNewDiv);
+      }
 
-        const checkbox = div.querySelector('input[type="checkbox"]');
-        checkbox.addEventListener('change', () => {
-          if (checkbox.checked) {
-            checkedItems.add(gearItem.id);
-            div.className = 'gear-card flex items-center gap-3 p-3 rounded-lg border cursor-pointer bg-gray-50 border-gray-200';
-          } else {
-            checkedItems.delete(gearItem.id);
-            div.className = 'gear-card flex items-center gap-3 p-3 rounded-lg border cursor-pointer bg-green-50 border-green-200';
-          }
-          updateChecklistCount(gear);
+      // ── Carrying over collapsible section ──
+      if (carryOverItems.length > 0) {
+        const collapseWrapper = document.createElement('div');
+        collapseWrapper.className = 'mt-6';
+
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'w-full flex items-center justify-between p-3 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer text-left';
+        toggleBtn.setAttribute('aria-expanded', 'false');
+        toggleBtn.setAttribute('aria-controls', 'carrying-over-list');
+        toggleBtn.innerHTML = `
+          <span class="text-sm font-bold text-navy-600 flex items-center gap-2">
+            ✓ Carrying over from previous level
+            <span class="text-xs font-normal text-gray-500">(${carryOverItems.length} item${carryOverItems.length !== 1 ? 's' : ''})</span>
+          </span>
+          <svg class="w-4 h-4 text-gray-500 transition-transform carrying-over-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        `;
+        collapseWrapper.appendChild(toggleBtn);
+
+        const collapseContent = document.createElement('div');
+        collapseContent.id = 'carrying-over-list';
+        collapseContent.className = 'hidden mt-2 space-y-2';
+        collapseContent.setAttribute('role', 'group');
+        collapseContent.setAttribute('aria-label', 'Gear carrying over from previous level');
+
+        carryOverItems.forEach(gearItem => {
+          collapseContent.appendChild(buildChecklistCard(gearItem, toId, fromIds, isNewSwimmer, gear));
+        });
+        collapseWrapper.appendChild(collapseContent);
+
+        // Toggle click handler
+        toggleBtn.addEventListener('click', () => {
+          const isOpen = collapseContent.classList.contains('hidden');
+          collapseContent.classList.toggle('hidden');
+          toggleBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+          const arrow = toggleBtn.querySelector('.carrying-over-arrow');
+          if (arrow) arrow.style.transform = isOpen ? 'rotate(180deg)' : '';
         });
 
-        $checklistItems.appendChild(div);
-      });
+        $checklistItems.appendChild(collapseWrapper);
+      }
+    } else {
+      // ── New swimmer: show all items flat (no collapsible) ──
+      const categories = groupByCategory(gear);
+      for (const [cat, items] of Object.entries(categories)) {
+        const catHeader = document.createElement('div');
+        catHeader.className = 'mt-4 mb-2 first:mt-0';
+        catHeader.innerHTML = `<h3 class="text-sm font-bold text-navy-600 uppercase tracking-wider flex items-center gap-2">
+          ${cat === 'WATER' ? '🏊' : '🏋️'} ${cat} Gear
+        </h3>`;
+        $checklistItems.appendChild(catHeader);
+
+        items.forEach(gearItem => {
+          $checklistItems.appendChild(buildChecklistCard(gearItem, toId, fromIds, isNewSwimmer, gear));
+        });
+      }
     }
 
     updateChecklistCount(gear);
+  }
+
+  /**
+   * Build a single gear checklist card element.
+   * Extracted from showChecklist for reuse in both flat and collapsible layouts.
+   */
+  function buildChecklistCard(gearItem, toId, fromIds, isNewSwimmer, allGear) {
+    const isOwned = fromIds.has(gearItem.id);
+    const isRequired = gearItem.levels[toId] === 'R';
+    const isOptional = gearItem.levels[toId] === 'O';
+
+    // Build badge HTML (Issue #8)
+    let badgeHtml = '';
+    if (isRequired) badgeHtml += '<span class="badge-required text-xs px-2 py-0.5 rounded-full font-medium">Required</span>';
+    if (isOptional) badgeHtml += '<span class="badge-optional text-xs px-2 py-0.5 rounded-full font-medium">Optional</span>';
+
+    if (isOwned) {
+      badgeHtml += '<span class="badge-have text-xs px-2 py-0.5 rounded-full font-medium">You have this ✓</span>';
+    } else if (!isNewSwimmer) {
+      badgeHtml += `<span class="badge-new text-xs px-2 py-0.5 rounded-full font-medium">NEW at ${toId}</span>`;
+    }
+
+    const div = document.createElement('label');
+    div.className = `gear-card flex items-center gap-3 p-3 rounded-lg border cursor-pointer ${checkedItems.has(gearItem.id) ? 'bg-gray-50 border-gray-200' : 'bg-green-50 border-green-200'}`;
+    div.innerHTML = `
+      <input type="checkbox" class="w-5 h-5 rounded border-gray-300 text-teal-500 focus:ring-teal-400 cursor-pointer"
+        data-gear-id="${gearItem.id}" ${checkedItems.has(gearItem.id) ? 'checked' : ''}
+        aria-label="${gearItem.name} — ${isRequired ? 'required' : 'optional'}${checkedItems.has(gearItem.id) ? ', you have this' : ', needed'}">
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="font-medium text-sm">${gearItem.name}</span>
+          ${badgeHtml}
+        </div>
+        ${gearItem.model ? '<p class="text-xs text-teal-700 mt-0.5 font-medium">' + gearItem.model + '</p>' : ''}
+        ${gearItem.notes ? '<p class="text-xs text-gray-500 mt-0.5">' + gearItem.notes + '</p>' : ''}
+      </div>
+      ${getSourceBadge(gearItem)}
+    `;
+
+    const checkbox = div.querySelector('input[type="checkbox"]');
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked) {
+        checkedItems.add(gearItem.id);
+        div.className = 'gear-card flex items-center gap-3 p-3 rounded-lg border cursor-pointer bg-gray-50 border-gray-200';
+      } else {
+        checkedItems.delete(gearItem.id);
+        div.className = 'gear-card flex items-center gap-3 p-3 rounded-lg border cursor-pointer bg-green-50 border-green-200';
+      }
+      updateChecklistCount(allGear);
+    });
+
+    return div;
   }
 
   function updateChecklistCount(gear) {
