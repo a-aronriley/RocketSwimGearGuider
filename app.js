@@ -451,7 +451,20 @@ document.addEventListener("alpine:init", () => {
     isRequired(item, bucket) { return Boolean(bucket) && item.groups.includes(bucket); },
     isOptional(item, bucket) { return Boolean(bucket) && (item.optionalGroups || []).includes(bucket); },
     isCoach(item) { return item.source === "coach"; },
-    isStoreLike(item) { return item.source !== "coach"; },
+    isKit(item) { return item.source === "kit" || item.kit === true; },
+    isStoreLike(item) { return item.source !== "coach" && item.source !== "kit"; },
+
+    /* Kit items: first freeQty units are free; extras cost money via coach */
+    kitFreeQty(item) { return this.isKit(item) ? (item.freeQty || 1) : 0; },
+    kitExtraQty(swimmer, item) {
+      if (!this.isKit(item)) return 0;
+      const total = this.qtyOf(swimmer, item.id);
+      return Math.max(0, total - this.kitFreeQty(item));
+    },
+    kitExtraCost(swimmer, item) {
+      if (!this.isKit(item) || item.priceCAD == null) return 0;
+      return this.kitExtraQty(swimmer, item) * item.priceCAD;
+    },
 
     replacedIdsForBucket(bucket) {
       const ids = new Set();
@@ -570,11 +583,13 @@ document.addEventListener("alpine:init", () => {
         if (this.statusOf(swimmer, item) !== status) return false;
         if (sourceKind === "coach") return this.isCoach(item);
         if (sourceKind === "store") return this.isStoreLike(item);
+        if (sourceKind === "kit") return this.isKit(item);
         return true;
       });
     },
 
     needItems(swimmer, sourceKind) { return this.itemsWithStatus(swimmer, "need", sourceKind); },
+    needKitItems(swimmer) { return this.itemsWithStatus(swimmer, "need", "kit"); },
     haveItems(swimmer) { return this.itemsWithStatus(swimmer, "have"); },
     retireItems(swimmer) { return this.itemsWithStatus(swimmer, "retire"); },
     optionalItems(swimmer) { return this.itemsWithStatus(swimmer, "optional"); },
@@ -597,7 +612,9 @@ document.addEventListener("alpine:init", () => {
     /* ── Pricing ──────────────────────────────────────────────── */
     lineCost(swimmer, item) {
       if (item.priceCAD == null) return null;
-      return item.priceCAD * this.qtyOf(swimmer, item);
+      /* Kit items: first freeQty are free, only extras cost */
+      if (this.isKit(item)) return this.kitExtraCost(swimmer, item);
+      return item.priceCAD * this.qtyOf(swimmer, item.id);
     },
 
     sumCosts(rows, kind) {
@@ -618,7 +635,17 @@ document.addEventListener("alpine:init", () => {
     },
 
     /* ── Review section helpers ────────────────────────────────── */
-    swimmerCoachRows(swimmer) { return this.needItems(swimmer, "coach"); },
+    swimmerCoachRows(swimmer) {
+      /* Coach rows = paid via e-transfer. Kit items are free (first qty) so excluded. */
+      return this.needItems(swimmer, "coach");
+    },
+
+    /* Kit items for a swimmer — free starter gear */
+    swimmerKitItems(swimmer) {
+      return this.listedItems(swimmer).filter(item =>
+        this.isKit(item) && this.statusOf(swimmer, item) === "need"
+      );
+    },
 
     swimmerCoachSubtotal(swimmer) {
       return this.sumCosts(
@@ -728,9 +755,21 @@ document.addEventListener("alpine:init", () => {
         } else {
           lines.push(`${name}: New to Rocket, ${this.groupName(swimmer.newGroup)}`);
         }
+
+        /* Kit items — free starter gear */
+        const kitItems = this.needKitItems(swimmer);
+        if (kitItems.length) {
+          lines.push("Starter kit (included free):");
+          kitItems.forEach(item => lines.push(`- ${item.name} x1: FREE`));
+        }
+
+        /* Coach items — paid via e-transfer */
         const rows = this.swimmerCoachRows(swimmer);
-        if (!rows.length) lines.push("- No coach-supplied items to pay");
-        rows.forEach(item => lines.push(`- ${this.lineLabel(swimmer, item)}`));
+        if (!rows.length && !kitItems.length) lines.push("- No coach-supplied items to pay");
+        if (rows.length) {
+          lines.push("Coach gear (pay via e-Transfer):");
+          rows.forEach(item => lines.push(`- ${this.lineLabel(swimmer, item)}`));
+        }
         const sub = this.swimmerCoachSubtotal(swimmer);
         const subText = sub.incomplete && sub.total === 0
           ? "Price TBC"

@@ -188,8 +188,34 @@
                   share the same equipment list. Nothing new to buy.
                 </p>
 
-                <!-- Coach-supplied gear -->
-                <div class="section-head"><h2>Supplied by coaches</h2></div>
+                <!-- Starter Kit (free gear) -->
+                <template x-if="needKitItems(swimmer).length">
+                  <div>
+                    <div class="section-head">
+                      <h2>🎁 Starter Kit — Included Free</h2>
+                      <p class="hint">Every swimmer gets 1 of each. Pick up from your coach at practice.</p>
+                    </div>
+                    <div class="cards">
+                      <template x-for="item in needKitItems(swimmer)" :key="'kit-' + item.id">
+                        <article class="item-card">
+                          <div class="item-card__top">
+                            <h3 x-text="item.name"></h3>
+                            <span class="badge badge--have">FREE</span>
+                          </div>
+                          <div class="meta">
+                            <p x-show="item.model"><span x-text="item.model"></span></p>
+                            <p>Sizing: <span x-text="item.sizingNote || 'One size'"></span></p>
+                            <p>Pickup: <span x-text="item.pickup || 'Ask coach at practice'"></span></p>
+                            <p x-show="item.notes" x-text="item.notes" style="font-style:italic;"></p>
+                          </div>
+                        </article>
+                      </template>
+                    </div>
+                  </div>
+                </template>
+
+                <!-- Coach-supplied gear (paid via e-Transfer) -->
+                <div class="section-head"><h2>Supplied by coaches — pay via e-Transfer</h2></div>
                 <div class="cards">
                   <template x-for="item in needItems(swimmer, 'coach')" :key="item.id">
                     <article class="item-card">
@@ -343,9 +369,28 @@
               <p class="hint">Your swimmer has all the gear needed for this level.</p>
             </div>
 
+            <!-- Starter Kit summary -->
+            <template x-if="swimmers.some(s => needKitItems(s).length)">
+              <article class="review-block">
+                <h2>🎁 Starter Kit — FREE</h2>
+                <p class="hint">Pick these up from your coach at practice. 1 of each is included free.</p>
+                <template x-for="(swimmer, index) in swimmers" :key="'kit-rev-' + swimmer.id">
+                  <div x-show="needKitItems(swimmer).length">
+                    <h3 x-text="swimmerLabel(swimmer, index)"></h3>
+                    <template x-for="item in needKitItems(swimmer)" :key="'kitline-' + swimmer.id + item.id">
+                      <div class="line">
+                        <span x-text="item.name"></span>
+                        <span class="badge badge--have">FREE</span>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+              </article>
+            </template>
+
             <!-- A. Coach gear -->
             <article class="review-block" x-show="sessionNeedItems().length > 0">
-              <h2>A. Coach-supplied gear</h2>
+              <h2>A. Coach-supplied gear — pay via e-Transfer</h2>
               <p><span x-text="payment.method"></span></p>
               <div class="field">
                 <label for="pay-email">Send payment to</label>
