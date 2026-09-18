@@ -431,7 +431,9 @@ document.addEventListener("alpine:init", () => {
       if (swimmer.situation !== "moving" || !swimmer.currentGroup) return this.groups;
       const cur = this.groupById(swimmer.currentGroup);
       if (!cur) return this.groups;
-      return this.groups.filter(g => g.pathway === cur.pathway && g.order > cur.order);
+      return this.groups.filter(g =>
+        (g.pathway === cur.pathway && g.order > cur.order) || g.pathway === "masters"
+      );
     },
 
     setupReady(swimmer) {
