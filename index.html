@@ -192,7 +192,7 @@
                 <template x-if="needKitItems(swimmer).length">
                   <div>
                     <div class="section-head">
-                      <h2>🎁 Starter Kit — Included Free</h2>
+                      <h2>🎁 Starter Kit — Included with Registration</h2>
                       <p class="hint">Every swimmer gets 1 of each. Pick up from your coach at practice.</p>
                     </div>
                     <div class="cards">
@@ -200,7 +200,7 @@
                         <article class="item-card">
                           <div class="item-card__top">
                             <h3 x-text="item.name"></h3>
-                            <span class="badge badge--have">FREE</span>
+                            <span class="badge badge--have">Included</span>
                           </div>
                           <div class="meta">
                             <p x-show="item.model"><span x-text="item.model"></span></p>
@@ -372,15 +372,15 @@
             <!-- Starter Kit summary -->
             <template x-if="swimmers.some(s => needKitItems(s).length)">
               <article class="review-block">
-                <h2>🎁 Starter Kit — FREE</h2>
-                <p class="hint">Pick these up from your coach at practice. 1 of each is included free.</p>
+                <h2>🎁 Starter Kit — Included with Registration</h2>
+                <p class="hint">Pick these up from your coach at practice. 1 of each is included with your registration.</p>
                 <template x-for="(swimmer, index) in swimmers" :key="'kit-rev-' + swimmer.id">
                   <div x-show="needKitItems(swimmer).length">
                     <h3 x-text="swimmerLabel(swimmer, index)"></h3>
                     <template x-for="item in needKitItems(swimmer)" :key="'kitline-' + swimmer.id + item.id">
                       <div class="line">
                         <span x-text="item.name"></span>
-                        <span class="badge badge--have">FREE</span>
+                        <span class="badge badge--have">Included</span>
                       </div>
                     </template>
                   </div>

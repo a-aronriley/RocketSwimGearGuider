@@ -756,11 +756,11 @@ document.addEventListener("alpine:init", () => {
           lines.push(`${name}: New to Rocket, ${this.groupName(swimmer.newGroup)}`);
         }
 
-        /* Kit items — free starter gear */
+        /* Kit items — included with registration */
         const kitItems = this.needKitItems(swimmer);
         if (kitItems.length) {
-          lines.push("Starter kit (included free):");
-          kitItems.forEach(item => lines.push(`- ${item.name} x1: FREE`));
+          lines.push("Starter kit (included with registration):");
+          kitItems.forEach(item => lines.push(`- ${item.name} x1: Included`));
         }
 
         /* Coach items — paid via e-transfer */

@@ -62,12 +62,12 @@
       "optionalGroups": [],
       "replaces": [],
       "neededBy": "Day 1",
-      "pickup": "Included in starter kit — ask coach",
+      "pickup": "Included with registration — ask coach",
       "url": null,
       "category": "water",
       "kit": true,
       "freeQty": 1,
-      "notes": "1 included free in starter kit. Extra caps $20 each — pay coach via e-Transfer."
+      "notes": "1 included with registration. Extra caps $20 each — pay coach via e-Transfer."
     },
     {
       "id": "club-tshirt",
@@ -82,12 +82,12 @@
       "optionalGroups": [],
       "replaces": [],
       "neededBy": "First week",
-      "pickup": "Included in starter kit — ask coach",
+      "pickup": "Included with registration — ask coach",
       "url": null,
       "category": "water",
       "kit": true,
       "freeQty": 1,
-      "notes": "1 included free in starter kit. Extra t-shirts $20 each — pay coach via e-Transfer."
+      "notes": "1 included with registration. Extra t-shirts $20 each — pay coach via e-Transfer."
     },
     {
       "id": "club-mesh-bag",
@@ -498,12 +498,12 @@
       "optionalGroups": [],
       "replaces": [],
       "neededBy": "First week",
-      "pickup": "Included in starter kit — ask coach",
+      "pickup": "Included with registration — ask coach",
       "url": null,
       "category": "dryland",
       "kit": true,
       "freeQty": 1,
-      "notes": "1 included free in starter kit. Extra sweatshirts $45 each — pay coach via e-Transfer."
+      "notes": "1 included with registration. Extra sweatshirts $45 each — pay coach via e-Transfer."
     },
     {
       "id": "club-winter-hat",
@@ -518,12 +518,12 @@
       "optionalGroups": [],
       "replaces": [],
       "neededBy": "First week",
-      "pickup": "Included in starter kit — ask coach",
+      "pickup": "Included with registration — ask coach",
       "url": null,
       "category": "dryland",
       "kit": true,
       "freeQty": 1,
-      "notes": "1 included free in starter kit. Extra beanies $20 each — pay coach via e-Transfer."
+      "notes": "1 included with registration. Extra beanies $20 each — pay coach via e-Transfer."
     },
     {
       "id": "club-bucket-hat",
