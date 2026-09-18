@@ -517,6 +517,7 @@ document.addEventListener("alpine:init", () => {
 
       /* moving */
       if (requiredCurrent && replacedInNew.has(item.id)) return "retire";
+      if (requiredCurrent && !requiredNew && !optionalNew) return "retire";
       if (requiredNew && requiredCurrent && !replacedInNew.has(item.id)) return "have";
       if (requiredNew && !requiredCurrent) return "need";
       if (optionalNew && this.optedIn(swimmer, item.id)) return "need";
@@ -574,7 +575,12 @@ document.addEventListener("alpine:init", () => {
       const replaced = this.replacedIdsForBucket(newBucket);
       return this.items.filter(item => {
         if (this.isRequired(item, newBucket) || this.isOptional(item, newBucket)) return true;
-        return Boolean(currentBucket) && this.isRequired(item, currentBucket) && replaced.has(item.id);
+        /* Include items from old group that are retiring (replaced or simply dropped) */
+        if (Boolean(currentBucket) && this.isRequired(item, currentBucket)) {
+          if (replaced.has(item.id)) return true;
+          if (!this.isRequired(item, newBucket) && !this.isOptional(item, newBucket)) return true;
+        }
+        return false;
       });
     },
 
